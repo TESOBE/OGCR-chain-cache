@@ -1,0 +1,82 @@
+{
+  "parcel_on_chain": {
+    "description": "Cache of CarbonProjectNFT data minted on the OGCR chain (chain id 2025). One record per parcel_id, populated by OGCR-chain-cache reading the chain. Does not mutate the source `parcel` entity.",
+    "required": ["parcel_id", "token_id"],
+    "properties": {
+      "parcel_id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255,
+        "example": "parcel_AB12CD34EF",
+        "description": "Links to the `parcel` dynamic entity. The on-chain NFT is keyed by this id."
+      },
+      "token_id": {
+        "type": "integer",
+        "example": 1,
+        "description": "CarbonProjectNFT token id (projectId) minted for this parcel."
+      },
+      "carbon_amount": {
+        "type": "integer",
+        "example": 1000,
+        "description": "Carbon amount stored on-chain for this token."
+      },
+      "project_type": {
+        "type": "string",
+        "maxLength": 255,
+        "example": "carbon_farming",
+        "description": "Project type as stored on-chain."
+      },
+      "methodology": {
+        "type": "string",
+        "maxLength": 255,
+        "example": "SALUS v1.0",
+        "description": "Methodology as stored on-chain."
+      },
+      "vintage": {
+        "type": "string",
+        "maxLength": 16,
+        "example": "2024",
+        "description": "Vintage year as stored on-chain."
+      },
+      "minted_at": {
+        "type": "integer",
+        "example": 1779280448,
+        "description": "On-chain block timestamp (mintedAt) from projectData, unix seconds."
+      },
+      "owner_address": {
+        "type": "string",
+        "maxLength": 42,
+        "example": "0x30753E4A8aad7F8597332E813735Def5dD395028",
+        "description": "Current owner of the NFT (operator OGCR wallet address)."
+      },
+      "token_uri": {
+        "type": "string",
+        "maxLength": 20000,
+        "example": "data:application/json;base64,eyJuYW1lIjoiQ2FyYm9uIn0=",
+        "description": "tokenURI of the NFT (ERC721 metadata data-URI)."
+      },
+      "contract_address": {
+        "type": "string",
+        "maxLength": 42,
+        "example": "0xeec918d74c746167564401103096D45BbD494B74",
+        "description": "CarbonProjectNFT contract address the token was read from."
+      },
+      "chain_id": {
+        "type": "integer",
+        "example": 2025,
+        "description": "EVM chain id (OGCR chain = 2025)."
+      },
+      "tx_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "Mint transaction hash (from the CarbonProjectMinted event)."
+      },
+      "block_number": {
+        "type": "integer",
+        "example": 12345,
+        "description": "Block number the mint was included in."
+      }
+    }
+  }
+}

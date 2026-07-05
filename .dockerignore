@@ -1,0 +1,26 @@
+# VCS
+.git
+.gitignore
+
+# Secrets / local env
+.env
+.env.local
+*.env
+
+# IDE / editor
+.idea/
+.vscode/
+.zed/
+.DS_Store
+
+# Build artifacts
+/bin/
+*.log
+
+# Docs / meta (not needed in the image)
+README.md
+LICENSE
+Makefile
+Dockerfile
+.dockerignore
+.github/

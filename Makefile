@@ -13,10 +13,10 @@ test: ## run tests
 vet: ## go vet
 	go vet ./...
 
-setup-entity: ## create the parcel_on_chain dynamic entity in OBP (one-time)
+setup-entity: ## create/update the *_on_chain dynamic entities in OBP (one-time)
 	go run ./cmd/setup-entity
 
-run: ## mirror chain -> OBP (pass parcel ids via ARGS="p1 p2")
+run: ## mirror chain -> OBP (limit types via ARGS="parcel activity certification")
 	go run ./cmd/cacher $(ARGS)
 
 clean: ## remove build artifacts

@@ -88,3 +88,7 @@ internal/cache/               upsert chain data into the *_on_chain entities
 cmd/cacher/                   entry point: chain → *_on_chain
 cmd/setup-entity/             one-time entity create/update
 ```
+
+## Funding
+
+The OGCR Project has received funding from the European Union's Horizon Europe programme under grant agreement 101218854.

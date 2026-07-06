@@ -1,8 +1,13 @@
-// Command cacher reads CarbonProjectNFT data off the OGCR chain (chain id 2025)
-// and upserts it into the OBP `parcel_on_chain` dynamic entity.
+// Command cacher reads the OGCR NFT family off the chain (chain id 2025) and
+// upserts each token into its OBP `*_on_chain` dynamic entity.
 //
-//	cacher                          # mirror every minted parcel (event scan)
-//	cacher <parcel_id> [parcel_id…] # only the given parcel_id(s)
+//	cacher                       # mirror all three token types
+//	cacher parcel                # only ParcelNFT       -> parcel_on_chain
+//	cacher activity              # only ActivityNFT     -> activity_on_chain
+//	cacher certification         # only CertificationNFT-> certification_on_chain
+//
+// Multiple types may be listed. Re-running is safe (records are upserted by
+// business key).
 package main
 
 import (
@@ -25,41 +30,89 @@ func main() {
 		os.Exit(1)
 	}
 
-	reader, err := eth.NewReader(cfg.RPCURL, cfg.ContractAddress)
+	reader, err := eth.NewReader(cfg.RPCURL, cfg.ParcelContractAddress, cfg.ActivityContractAddress, cfg.CertificationContractAddress)
 	if err != nil {
 		slog.Error("failed to init chain reader", "err", err)
 		os.Exit(1)
 	}
 	client := obp.NewClient(cfg.OBPURL, cfg.OBPUsername, cfg.OBPPassword, cfg.OBPConsumerKey)
 
-	ctx := context.Background()
-	parcelIDs := os.Args[1:]
-
-	var parcels []*eth.OnChainParcel
-	if len(parcelIDs) > 0 {
-		for _, pid := range parcelIDs {
-			ps, err := reader.ByParcelID(ctx, pid)
-			if err != nil {
-				slog.Error("read by parcel_id failed", "parcel_id", pid, "err", err)
-				continue
+	// Which token types to mirror (default: all).
+	want := map[string]bool{"parcel": true, "activity": true, "certification": true}
+	if args := os.Args[1:]; len(args) > 0 {
+		want = map[string]bool{}
+		for _, a := range args {
+			switch a {
+			case "parcel", "activity", "certification":
+				want[a] = true
+			default:
+				slog.Error("unknown token type (want parcel|activity|certification)", "arg", a)
+				os.Exit(1)
 			}
-			parcels = append(parcels, ps...)
-		}
-	} else {
-		parcels, err = reader.ScanMinted(ctx, cfg.FromBlock)
-		if err != nil {
-			slog.Error("scan minted failed", "err", err)
-			os.Exit(1)
 		}
 	}
 
-	slog.Info("read complete", "chain_id", reader.ChainID(), "parcels", len(parcels))
+	ctx := context.Background()
+	slog.Info("cacher start", "chain_id", reader.ChainID(), "from_block", cfg.FromBlock)
+
+	if want["parcel"] {
+		mirrorParcels(ctx, reader, client, cfg.FromBlock)
+	}
+	if want["activity"] {
+		mirrorActivities(ctx, reader, client, cfg.FromBlock)
+	}
+	if want["certification"] {
+		mirrorCertifications(ctx, reader, client, cfg.FromBlock)
+	}
+}
+
+func mirrorParcels(ctx context.Context, reader *eth.Reader, client *obp.Client, fromBlock uint64) {
+	parcels, err := reader.ScanParcels(ctx, fromBlock)
+	if err != nil {
+		slog.Error("scan parcels failed", "err", err)
+		return
+	}
+	slog.Info("parcels read", "count", len(parcels))
 	for _, p := range parcels {
-		msg, err := cache.Upsert(client, p)
+		msg, err := cache.UpsertParcel(client, p)
 		if err != nil {
-			slog.Error("upsert failed", "parcel_id", p.ParcelID, "err", err)
+			slog.Error("upsert parcel failed", "parcel_id", p.ParcelID, "err", err)
 			continue
 		}
-		slog.Info(msg, "parcel_id", p.ParcelID, "token_id", p.TokenID)
+		slog.Info("parcel "+msg, "parcel_id", p.ParcelID, "token_id", p.TokenID)
+	}
+}
+
+func mirrorActivities(ctx context.Context, reader *eth.Reader, client *obp.Client, fromBlock uint64) {
+	activities, err := reader.ScanActivities(ctx, fromBlock)
+	if err != nil {
+		slog.Error("scan activities failed", "err", err)
+		return
+	}
+	slog.Info("activities read", "count", len(activities))
+	for _, a := range activities {
+		msg, err := cache.UpsertActivity(client, a)
+		if err != nil {
+			slog.Error("upsert activity failed", "activity_id", a.ActivityID, "err", err)
+			continue
+		}
+		slog.Info("activity "+msg, "activity_id", a.ActivityID, "token_id", a.TokenID)
+	}
+}
+
+func mirrorCertifications(ctx context.Context, reader *eth.Reader, client *obp.Client, fromBlock uint64) {
+	certs, err := reader.ScanCertifications(ctx, fromBlock)
+	if err != nil {
+		slog.Error("scan certifications failed", "err", err)
+		return
+	}
+	slog.Info("certifications read", "count", len(certs))
+	for _, c := range certs {
+		msg, err := cache.UpsertCertification(client, c)
+		if err != nil {
+			slog.Error("upsert certification failed", "certification_of_compliance_id", c.CertificationOfComplianceID, "err", err)
+			continue
+		}
+		slog.Info("certification "+msg, "certification_of_compliance_id", c.CertificationOfComplianceID, "token_id", c.TokenID)
 	}
 }

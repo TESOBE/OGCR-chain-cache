@@ -175,28 +175,45 @@ func (c *Client) managementURL(version string) string {
 	return fmt.Sprintf("%s/obp/%s/management/system-dynamic-entities", c.baseURL, version)
 }
 
-// ListSystemDynamicEntityNames returns the set of existing system dynamic
-// entity names, so creation can be made idempotent.
-func (c *Client) ListSystemDynamicEntityNames(version string) (map[string]bool, error) {
+// SystemDynamicEntityIDs returns a map of entity name -> dynamicEntityId for
+// every existing system dynamic entity. The id is needed to update (PUT) an
+// entity; a missing name means it must be created (POST). The management list
+// nests each entity's schema under a key equal to the entity name, alongside
+// meta fields like dynamicEntityId — so the name is the schema-bearing key.
+func (c *Client) SystemDynamicEntityIDs(version string) (map[string]string, error) {
 	var raw struct {
 		DynamicEntities []map[string]any `json:"dynamic_entities"`
 	}
 	if err := c.do("GET", c.managementURL(version), nil, &raw); err != nil {
 		return nil, err
 	}
-	names := make(map[string]bool)
+	ids := make(map[string]string)
 	for _, e := range raw.DynamicEntities {
-		for _, k := range []string{"entityName", "entity_name"} {
-			if v, ok := e[k].(string); ok && v != "" {
-				names[v] = true
+		id, _ := e["dynamicEntityId"].(string)
+		if id == "" {
+			continue
+		}
+		for k, v := range e {
+			if m, ok := v.(map[string]any); ok {
+				if _, hasProps := m["properties"]; hasProps {
+					ids[k] = id
+				}
 			}
 		}
 	}
-	return names, nil
+	return ids, nil
 }
 
 func (c *Client) CreateSystemDynamicEntity(definition any, version string) (map[string]any, error) {
 	var out map[string]any
 	err := c.do("POST", c.managementURL(version), definition, &out)
+	return out, err
+}
+
+// UpdateSystemDynamicEntity replaces the definition of an existing system
+// dynamic entity (PUT /management/system-dynamic-entities/{id}).
+func (c *Client) UpdateSystemDynamicEntity(entityID string, definition any, version string) (map[string]any, error) {
+	var out map[string]any
+	err := c.do("PUT", c.managementURL(version)+"/"+entityID, definition, &out)
 	return out, err
 }

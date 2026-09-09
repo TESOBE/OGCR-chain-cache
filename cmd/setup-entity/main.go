@@ -1,5 +1,5 @@
-// Command setup-entity creates (or updates) the three `*_on_chain` system
-// dynamic entities in OBP from their JSON definitions. Requires the calling user
+// Command setup-entity creates (or updates) the `*_on_chain` system dynamic
+// entities in OBP from their JSON definitions. Requires the calling user
 // to have the CanCreateSystemLevelDynamicEntity / CanUpdateSystemLevelDynamicEntity
 // roles. Idempotent: an entity that already exists is updated in place (PUT), so
 // a stale schema (e.g. the old CarbonProjectNFT-shaped parcel_on_chain) is fixed.
@@ -24,6 +24,9 @@ var defFiles = []string{
 	"parcel_on_chain.json",
 	"activity_on_chain.json",
 	"certification_on_chain.json",
+	"carbon_credit_batch_on_chain.json",
+	"carbon_credit_balance_on_chain.json",
+	"chain_sync_status.json",
 }
 
 func main() {

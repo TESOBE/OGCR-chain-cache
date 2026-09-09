@@ -1,0 +1,154 @@
+{
+  "carbon_credit_batch_on_chain": {
+    "description": "Cache of CarbonCreditBatchNFT data minted on the OGCR chain (chain id 2025). One record per batch token. A batch is one (activity_nft_id, credit_type) pair, and each batch owns an ERC-6551 token-bound account that holds its CarbonCredit (ERC-20) balance. Populated by OGCR-chain-cache reading the chain. Join to `activity_on_chain` on activity_nft_id = token_id to reach the OBP activity.",
+    "required": ["batch_key", "token_id", "credit_type"],
+    "properties": {
+      "batch_key": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512,
+        "example": "1:permanent_carbon_removal",
+        "description": "Business key for this record: \"<activity_nft_id>:<credit_type>\". Mirrors the contract's own uniqueness constraint (batchKey = keccak256(activity_nft_id, credit_type)), which allows exactly one batch per pair. Used to match records for upsert, since a string key can be filtered server-side where an integer token_id cannot be relied on to be."
+      },
+      "token_id": {
+        "type": "integer",
+        "example": 1,
+        "description": "CarbonCreditBatchNFT token id, unique per contract. Records are matched on batch_key rather than this, so that the match uses a string field."
+      },
+      "credit_type": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255,
+        "example": "permanent_carbon_removal",
+        "description": "CRCF unit category this batch represents, as stored on-chain. A batch is unique per (activity_nft_id, credit_type)."
+      },
+      "activity_nft_id": {
+        "type": "integer",
+        "example": 1,
+        "description": "ActivityNFT token id this batch was issued against. Join to `activity_on_chain`.token_id to reach the OBP activity_id."
+      },
+      "activity_url": {
+        "type": "string",
+        "maxLength": 2048,
+        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/activity/activity_AB12CD34EF",
+        "description": "activity_url stored on-chain: link back to the OBP activity entity."
+      },
+      "activity_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "activity_hash stored on-chain: keccak256 of the raw activity entity body."
+      },
+      "operator_url": {
+        "type": "string",
+        "maxLength": 2048,
+        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/operator/op_01JS0347FKH",
+        "description": "operator_url stored on-chain: link back to the OBP operator entity."
+      },
+      "operator_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "operator_hash stored on-chain: keccak256 of the raw operator entity body."
+      },
+      "certification_url": {
+        "type": "string",
+        "maxLength": 2048,
+        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/certificate_of_compliance/coc_AB12CD34EF",
+        "description": "certification_url stored on-chain: link back to the OBP certificate_of_compliance entity."
+      },
+      "certification_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "certification_hash stored on-chain: keccak256 of the raw certificate entity body."
+      },
+      "certification_scheme_url": {
+        "type": "string",
+        "maxLength": 2048,
+        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/certification_scheme/scheme_SALUS",
+        "description": "certification_scheme_url stored on-chain: link back to the OBP certification_scheme entity."
+      },
+      "certification_scheme_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "certification_scheme_hash stored on-chain: keccak256 of the raw certification scheme entity body."
+      },
+      "certification_body_url": {
+        "type": "string",
+        "maxLength": 2048,
+        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/certification_body/body_VERRA",
+        "description": "certification_body_url stored on-chain: link back to the OBP certification body entity."
+      },
+      "certification_body_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "certification_body_hash stored on-chain: keccak256 of the raw certification body entity body."
+      },
+      "token_bound_account": {
+        "type": "string",
+        "maxLength": 42,
+        "example": "0x9F2fCc7C4E1C0eA0dB1A0EbD79b0Cc7Ee4c3e5a1",
+        "description": "ERC-6551 token-bound account for this batch. This address holds the batch's CarbonCredit (ERC-20) balance."
+      },
+      "credit_balance": {
+        "type": "string",
+        "maxLength": 78,
+        "example": "1000000000000000000",
+        "description": "CarbonCredit (ERC-20) balance held by token_bound_account, in smallest units, as read at block_number_balance. Decimal string because a uint256 does not fit an integer field. Divide by 10^credit_decimals for tonnes CO2e. Empty when no CarbonCredit contract address is configured."
+      },
+      "credit_decimals": {
+        "type": "integer",
+        "example": 18,
+        "description": "Decimals of the CarbonCredit ERC-20, for rendering credit_balance. 0 when no CarbonCredit contract address is configured."
+      },
+      "credit_contract_address": {
+        "type": "string",
+        "maxLength": 42,
+        "example": "0x1B4bC0dE8b6A1A2b3C4d5E6f7A8b9C0d1E2f3A4b",
+        "description": "CarbonCredit ERC-20 contract address the balance was read from."
+      },
+      "block_number_balance": {
+        "type": "integer",
+        "example": 12400,
+        "description": "Block height the credit_balance was read at. Unlike the mint fields, the balance is current-state, not historical, so it is only true as of this block."
+      },
+      "owner_address": {
+        "type": "string",
+        "maxLength": 42,
+        "example": "0x30753E4A8aad7F8597332E813735Def5dD395028",
+        "description": "Current owner of the batch NFT (operator OGCR wallet address). Owning the NFT gates the right to move the credits held in its token-bound account."
+      },
+      "token_uri": {
+        "type": "string",
+        "maxLength": 20000,
+        "example": "data:application/json;base64,eyJuYW1lIjoiQmF0Y2gifQ==",
+        "description": "tokenURI of the NFT (ERC721 metadata data-URI, rendered on-chain from the batch data)."
+      },
+      "contract_address": {
+        "type": "string",
+        "maxLength": 42,
+        "example": "0x38cF23C52Bb4B13F051Aec09580a2dE845a7FA35",
+        "description": "CarbonCreditBatchNFT contract address the token was read from."
+      },
+      "chain_id": {
+        "type": "integer",
+        "example": 2025,
+        "description": "EVM chain id (OGCR chain = 2025)."
+      },
+      "tx_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "Mint transaction hash (from the BatchMinted event)."
+      },
+      "block_number": {
+        "type": "integer",
+        "example": 12345,
+        "description": "Block number the mint was included in."
+      }
+    }
+  }
+}

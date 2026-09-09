@@ -10,8 +10,13 @@ import (
 
 // Config holds everything the cacher needs. It only ever reads the chain (no
 // private key) and writes to OBP via DirectLogin. The chain side is the OGCR
-// token family; this tool mirrors the three NFT types (Parcel, Activity,
-// Certification) into their `*_on_chain` OBP dynamic entities.
+// token family; this tool mirrors every deployed contract in it into the
+// matching `*_on_chain` OBP dynamic entity.
+//
+// The three NFT addresses are required. The two carbon-credit addresses are
+// optional so the cacher still runs against a chain where the credit contracts
+// have not been deployed yet; the credit mirrors are skipped when they are
+// unset.
 type Config struct {
 	OBPURL         string
 	OBPUsername    string
@@ -23,9 +28,24 @@ type Config struct {
 	ActivityContractAddress      string
 	CertificationContractAddress string
 
+	// Optional: the carbon-credit half of the token family.
+	CreditBatchContractAddress string
+	CreditContractAddress      string
+
 	// FromBlock is the block to start scanning *Minted events from (default 0).
 	FromBlock uint64
+
+	// IntervalSeconds is how often a supervising loop intends to re-run this
+	// tool. It is recorded in chain_sync_status so a consumer can decide what
+	// counts as stale without hardcoding the schedule. 0 means "run by hand".
+	IntervalSeconds int
 }
+
+// HasCreditBatch reports whether the CarbonCreditBatchNFT address is configured.
+func (c *Config) HasCreditBatch() bool { return c.CreditBatchContractAddress != "" }
+
+// HasCredit reports whether the CarbonCredit ERC-20 address is configured.
+func (c *Config) HasCredit() bool { return c.CreditContractAddress != "" }
 
 func Load() (*Config, error) {
 	_ = godotenv.Load() // already-set env vars take precedence
@@ -59,6 +79,15 @@ func Load() (*Config, error) {
 		fromBlock = n
 	}
 
+	interval := 0
+	if s := os.Getenv("SYNC_INTERVAL_SECONDS"); s != "" {
+		n, err := strconv.Atoi(s)
+		if err != nil || n < 0 {
+			return nil, fmt.Errorf("invalid SYNC_INTERVAL_SECONDS: %q", s)
+		}
+		interval = n
+	}
+
 	return &Config{
 		OBPURL:                       os.Getenv("OBP_URL"),
 		OBPUsername:                  os.Getenv("OBP_USERNAME"),
@@ -68,6 +97,9 @@ func Load() (*Config, error) {
 		ParcelContractAddress:        os.Getenv("PARCEL_CONTRACT_ADDRESS"),
 		ActivityContractAddress:      os.Getenv("ACTIVITY_CONTRACT_ADDRESS"),
 		CertificationContractAddress: os.Getenv("CERTIFICATION_CONTRACT_ADDRESS"),
+		CreditBatchContractAddress:   os.Getenv("CREDIT_BATCH_CONTRACT_ADDRESS"),
+		CreditContractAddress:        os.Getenv("CREDIT_CONTRACT_ADDRESS"),
 		FromBlock:                    fromBlock,
+		IntervalSeconds:              interval,
 	}, nil
 }

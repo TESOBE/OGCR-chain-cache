@@ -1,0 +1,59 @@
+{
+  "carbon_credit_balance_on_chain": {
+    "description": "Cache of CarbonCredit (ERC-20) balances on the OGCR chain (chain id 2025). One record per holding address, covering both operator wallets and the ERC-6551 token-bound accounts of credit batches. Populated by OGCR-chain-cache, which derives the holder set from Transfer events and then reads each balance at the current head. Balances are current-state, not historical: each record is only true as of block_number.",
+    "required": ["owner_address"],
+    "properties": {
+      "owner_address": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 42,
+        "example": "0x30753E4A8aad7F8597332E813735Def5dD395028",
+        "description": "Address holding the balance, lowercase-insensitive checksum form. The business key for this record. Match against operator.ogcr_wallet_address or land_manager.ogcr_wallet_address to find a party's holdings."
+      },
+      "balance": {
+        "type": "string",
+        "maxLength": 78,
+        "example": "1000000000000000000",
+        "description": "CarbonCredit balance in smallest units, as read at block_number. Decimal string because a uint256 does not fit an integer field. Divide by 10^decimals for tonnes CO2e."
+      },
+      "decimals": {
+        "type": "integer",
+        "example": 18,
+        "description": "Decimals of the CarbonCredit ERC-20, for rendering balance."
+      },
+      "symbol": {
+        "type": "string",
+        "maxLength": 32,
+        "example": "CC",
+        "description": "Symbol of the CarbonCredit ERC-20."
+      },
+      "holder_type": {
+        "type": "string",
+        "maxLength": 32,
+        "example": "token_bound_account",
+        "description": "Whether this address is a plain wallet or the ERC-6551 token-bound account of a credit batch. One of: wallet, token_bound_account. A token_bound_account balance is credits still held inside their batch; a wallet balance is credits withdrawn from a batch and now pooled."
+      },
+      "batch_token_id": {
+        "type": "integer",
+        "example": 1,
+        "description": "When holder_type is token_bound_account, the CarbonCreditBatchNFT token id this account belongs to. 0 otherwise. Join to `carbon_credit_batch_on_chain`.token_id."
+      },
+      "contract_address": {
+        "type": "string",
+        "maxLength": 42,
+        "example": "0x1B4bC0dE8b6A1A2b3C4d5E6f7A8b9C0d1E2f3A4b",
+        "description": "CarbonCredit ERC-20 contract address the balance was read from."
+      },
+      "chain_id": {
+        "type": "integer",
+        "example": 2025,
+        "description": "EVM chain id (OGCR chain = 2025)."
+      },
+      "block_number": {
+        "type": "integer",
+        "example": 12400,
+        "description": "Block height the balance was read at."
+      }
+    }
+  }
+}

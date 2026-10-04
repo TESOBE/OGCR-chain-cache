@@ -54,7 +54,7 @@ func main() {
 		slog.Error("failed to init chain reader", "err", err)
 		os.Exit(1)
 	}
-	client := obp.NewClient(cfg.OBPURL, cfg.OBPUsername, cfg.OBPPassword, cfg.OBPConsumerKey)
+	client := obp.NewClient(cfg.OBPURL, cfg.OBPUsername, cfg.OBPPassword, cfg.OBPConsumerKey, cfg.EntitySpaceID)
 
 	// Which token types to mirror (default: all).
 	want := map[string]bool{}

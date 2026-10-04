@@ -6,6 +6,7 @@ help: ## list targets
 build: ## build both binaries into bin/
 	go build -o bin/cacher ./cmd/cacher
 	go build -o bin/setup-entity ./cmd/setup-entity
+	go build -o bin/delete-records ./cmd/delete-records
 
 test: ## run tests
 	go test ./...
@@ -15,6 +16,9 @@ vet: ## go vet
 
 setup-entity: ## create/update the *_on_chain dynamic entities in OBP (one-time)
 	go run ./cmd/setup-entity
+
+delete-records: ## delete every record of one *_on_chain entity, keeping its definition (ARGS="activity_on_chain", add -yes before it to delete)
+	go run ./cmd/delete-records $(ARGS)
 
 run: ## mirror chain -> OBP (limit types via ARGS="parcel activity certification credit")
 	go run ./cmd/cacher $(ARGS)

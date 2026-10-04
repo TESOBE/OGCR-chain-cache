@@ -1,14 +1,16 @@
 {
   "activity_on_chain": {
     "description": "Cache of ActivityNFT data minted on the OGCR chain (chain id 2025). One record per activity_id, populated by OGCR-chain-cache reading the chain.",
-    "required": ["activity_id", "token_id"],
+    "required": [
+      "activity_id",
+      "token_id"
+    ],
     "properties": {
       "activity_id": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 255,
+        "type": "reference:activity",
         "example": "activity_AB12CD34EF",
-        "description": "Links to the `activity` dynamic entity. The on-chain ActivityNFT is keyed by this id."
+        "description": "The `activity` this NFT was minted for (a reference, so OBP joins activity -> activity_on_chain, e.g. in the registry query). OBP refuses a record whose activity is not in this space.",
+        "indexed": true
       },
       "token_id": {
         "type": "integer",
@@ -90,6 +92,12 @@
         "type": "integer",
         "example": 12345,
         "description": "Block number the mint was included in."
+      },
+      "minted_at": {
+        "type": "integer",
+        "example": 1779280448,
+        "indexed": true,
+        "description": "Unix time (seconds) of the block the mint was included in."
       }
     }
   }

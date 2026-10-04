@@ -60,6 +60,8 @@ type OnChainActivity struct {
 	ChainID         uint64 `json:"chain_id"`
 	TxHash          string `json:"tx_hash"`
 	BlockNumber     uint64 `json:"block_number"`
+	// MintedAt is the Unix time (seconds) of the block the mint was included in.
+	MintedAt uint64 `json:"minted_at"`
 }
 
 // OnChainCertification is the chain-side view of one CertificationNFT, shaped
@@ -344,9 +346,30 @@ func (r *Reader) ScanParcels(ctx context.Context, fromBlock uint64) ([]*OnChainP
 	return out, nil
 }
 
+// blockTime returns the Unix time of block n, read once per block via `seen`.
+func (r *Reader) blockTime(ctx context.Context, n uint64, seen map[uint64]uint64) (uint64, error) {
+	if t, ok := seen[n]; ok {
+		return t, nil
+	}
+	var t uint64
+	if err := retry(func() error {
+		h, e := r.client.HeaderByNumber(ctx, new(big.Int).SetUint64(n))
+		if e != nil {
+			return e
+		}
+		t = h.Time
+		return nil
+	}); err != nil {
+		return 0, fmt.Errorf("header of block %d: %w", n, err)
+	}
+	seen[n] = t
+	return t, nil
+}
+
 // ScanActivities yields every minted ActivityNFT via the ActivityMinted event log.
 func (r *Reader) ScanActivities(ctx context.Context, fromBlock uint64) ([]*OnChainActivity, error) {
 	opts := &bind.CallOpts{Context: ctx}
+	blockTimes := map[uint64]uint64{}
 	var out []*OnChainActivity
 	err := r.eachWindow(ctx, fromBlock, func(start, end uint64) error {
 		var it *contract.ActivityNFTActivityMintedIterator
@@ -376,6 +399,10 @@ func (r *Reader) ScanActivities(ctx context.Context, fromBlock uint64) ([]*OnCha
 			}); err != nil {
 				return fmt.Errorf("enrich activity token %s: %w", ev.TokenId, err)
 			}
+			mintedAt, err := r.blockTime(ctx, ev.Raw.BlockNumber, blockTimes)
+			if err != nil {
+				return fmt.Errorf("enrich activity token %s: %w", ev.TokenId, err)
+			}
 			out = append(out, &OnChainActivity{
 				ActivityID:      data.ActivityId,
 				TokenID:         ev.TokenId.Uint64(),
@@ -392,6 +419,7 @@ func (r *Reader) ScanActivities(ctx context.Context, fromBlock uint64) ([]*OnCha
 				ChainID:         r.chainID,
 				TxHash:          ev.Raw.TxHash.Hex(),
 				BlockNumber:     ev.Raw.BlockNumber,
+				MintedAt:        mintedAt,
 			})
 		}
 		return it.Error()

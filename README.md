@@ -35,13 +35,20 @@ Most records hold the token's on-chain fields plus mint provenance (`token_id`,
 | Entity | Business key | On-chain payload mirrored |
 |---|---|---|
 | `parcel_on_chain` | `parcel_id` | `parcel_uri`, `parcel_hash` |
-| `activity_on_chain` | `activity_id` | `operator_id`, `name`, `activity_type`, `start_date`, `end_date`, `activity_url`, `activity_hash` |
+| `activity_on_chain` | `activity_id` (a `reference:activity`) | `operator_id`, `name`, `activity_type`, `start_date`, `end_date`, `activity_url`, `activity_hash`, and `minted_at` (Unix time of the mint block) |
 | `certification_on_chain` | `certification_of_compliance_id` | `activity_nft_id`, `certification_scheme_id`, `certification_body_id`, `issue_date`, `expiry_date`, `certification_status`, `activity_url/hash`, `certification_url/hash` |
 | `carbon_credit_batch_on_chain` | `batch_key` | `token_id`, `credit_type`, `activity_nft_id`, `token_bound_account`, `credit_balance`, url/hash pairs for activity, operator, certification, scheme and body |
 | `carbon_credit_balance_on_chain` | `owner_address` | `balance`, `decimals`, `symbol`, `holder_type`, `batch_token_id` |
 | `chain_sync_status` | `sync_key` | not a mirror: the liveness record for this tool, see below |
 
 It only ever reads the chain (no private key) and writes to OBP via DirectLogin.
+
+This tool is the source of truth for these entities: their definitions live here, in
+`entities/`, and OGCR-DynamicEntities ignores them in its spreadsheet. In
+`activity_on_chain`, `activity_id` is a `reference:activity` and indexed, so OBP can join
+an activity to its NFT (the registry query does, picking the latest by `minted_at`). The
+cost: OBP refuses an `activity_on_chain` record whose activity isn't in the same space, so
+such a token is logged as a failed upsert and skipped.
 
 ### Liveness: `chain_sync_status`
 
@@ -130,9 +137,14 @@ OBP_CONSUMER_KEY=...        # a consumer registered on the LOCAL OBP
 RPC_URL=http://127.0.0.1:8545
 ```
 
-The OBP user needs `CanCreateSystemLevelDynamicEntity` and
-`CanUpdateSystemLevelDynamicEntity`, plus the per-entity roles below; a super
-admin (`super_admin_user_ids` in the API props) satisfies all of them.
+The entities live in the bank (aka Space) named by `OBP_ENTITY_SPACE_ID`,
+default `ogcr`: the same variable OGCR-DynamicEntities and OGCR-App read, so set
+it to the same value in all three. Set it to the empty string for system level.
+
+The OBP user needs `CanCreateDynamicEntityDefinition` and
+`CanUpdateDynamicEntityDefinition` at that bank id (`SYS` for system level),
+plus the per-entity roles below; a super admin (`super_admin_user_ids` in the
+API props) satisfies all of them.
 
 **Keep the two halves consistent.** A local chain paired with a shared OBP would
 mirror throwaway fixture tokens into the real registry. If your `.env` has to
@@ -156,8 +168,9 @@ deleted before its schema can be migrated.
 
 ### One-time: create/update the `*_on_chain` entities
 
-Needs `CanCreateSystemLevelDynamicEntity` / `CanUpdateSystemLevelDynamicEntity`
-on the OBP user. Idempotent — an entity that already exists is updated in place
+Uses the v7.0.0 management API in the `OBP_ENTITY_SPACE_ID` space, and needs
+`CanCreateDynamicEntityDefinition` / `CanUpdateDynamicEntityDefinition` at that
+bank id on the OBP user. Idempotent — an entity that already exists is updated in place
 (PUT), so the previously-deployed `parcel_on_chain` (old CarbonProjectNFT shape)
 is migrated to the new schema.
 
@@ -165,9 +178,26 @@ is migrated to the new schema.
 make setup-entity        # go run ./cmd/setup-entity
 ```
 
-The OBP user also needs the per-entity `CanGetDynamicEntity_System*`,
-`CanCreateDynamicEntity_System*` and `CanUpdateDynamicEntity_System*` roles for
-each `*_on_chain` entity before the cacher can read/write records.
+The OBP user also needs the per-entity `CanGetDynamicEntityRecord_<entity>`,
+`CanCreateDynamicEntityRecord_<entity>` and `CanUpdateDynamicEntityRecord_<entity>`
+roles, at the same bank id, for each `*_on_chain` entity and `chain_sync_status`
+before the cacher can read/write records.
+
+### Emptying an entity
+
+OBP only allows some definition changes, such as retyping a field, on an entity
+with no records. The records are a cache of the chain, so empty the entity, apply
+the definition, and let the cacher write them again:
+
+```bash
+go run ./cmd/delete-records activity_on_chain         # list the records
+go run ./cmd/delete-records -yes activity_on_chain    # delete them (definition and Roles stay)
+make setup-entity
+go run ./cmd/cacher activity
+```
+
+It only accepts entities defined in `entities/`. Deleting needs
+`CanDeleteDynamicEntityRecord_<entity>` at the space's bank id.
 
 ## Run
 
@@ -200,6 +230,7 @@ internal/eth/                 chain reader (tokens + balances → OnChain* struc
 internal/cache/               upsert chain data into the *_on_chain entities
 cmd/cacher/                   entry point: chain → *_on_chain
 cmd/setup-entity/             one-time entity create/update
+cmd/delete-records/           empty one *_on_chain entity (the cacher refills it)
 ```
 
 Bindings are generated from the contract ABIs in

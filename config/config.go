@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -22,6 +23,12 @@ type Config struct {
 	OBPUsername    string
 	OBPPassword    string
 	OBPConsumerKey string
+
+	// EntitySpaceID is the bank (aka Space) the *_on_chain entities live in:
+	// OBP_ENTITY_SPACE_ID, the same variable OGCR-DynamicEntities and OGCR-App
+	// use, so all three agree on where the entities are. Unset means "ogcr";
+	// set it to the empty string for system level entities.
+	EntitySpaceID string
 
 	RPCURL                       string
 	ParcelContractAddress        string
@@ -88,11 +95,17 @@ func Load() (*Config, error) {
 		interval = n
 	}
 
+	space, ok := os.LookupEnv("OBP_ENTITY_SPACE_ID")
+	if !ok {
+		space = "ogcr"
+	}
+
 	return &Config{
 		OBPURL:                       os.Getenv("OBP_URL"),
 		OBPUsername:                  os.Getenv("OBP_USERNAME"),
 		OBPPassword:                  os.Getenv("OBP_PASSWORD"),
 		OBPConsumerKey:               os.Getenv("OBP_CONSUMER_KEY"),
+		EntitySpaceID:                strings.TrimSpace(space),
 		RPCURL:                       os.Getenv("RPC_URL"),
 		ParcelContractAddress:        os.Getenv("PARCEL_CONTRACT_ADDRESS"),
 		ActivityContractAddress:      os.Getenv("ACTIVITY_CONTRACT_ADDRESS"),

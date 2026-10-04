@@ -21,18 +21,21 @@ type Client struct {
 	username    string
 	password    string
 	consumerKey string
-	http        *http.Client
+	// spaceID is the bank the dynamic entities live in; empty for system level.
+	spaceID string
+	http    *http.Client
 
 	mu    sync.Mutex
 	token string
 }
 
-func NewClient(baseURL, username, password, consumerKey string) *Client {
+func NewClient(baseURL, username, password, consumerKey, spaceID string) *Client {
 	return &Client{
 		baseURL:     strings.TrimRight(baseURL, "/"),
 		username:    username,
 		password:    password,
 		consumerKey: consumerKey,
+		spaceID:     spaceID,
 		http:        &http.Client{Timeout: 30 * time.Second},
 	}
 }
@@ -132,7 +135,11 @@ func (c *Client) do(method, fullURL string, body any, out any) error {
 }
 
 func (c *Client) entityURL(entity, suffix string, params url.Values) string {
-	u := c.baseURL + "/obp/dynamic-entity/" + entity + suffix
+	u := c.baseURL + "/obp/dynamic-entity"
+	if c.spaceID != "" {
+		u += "/banks/" + url.PathEscape(c.spaceID)
+	}
+	u += "/" + entity + suffix
 	if len(params) > 0 {
 		u += "?" + params.Encode()
 	}
@@ -169,51 +176,72 @@ func (c *Client) UpdateRecord(entity, recordID string, record any) (map[string]a
 	return out, err
 }
 
-// ── dynamic-entity definitions (one-time management) ────────────────────────
-
-func (c *Client) managementURL(version string) string {
-	return fmt.Sprintf("%s/obp/%s/management/system-dynamic-entities", c.baseURL, version)
+func (c *Client) DeleteRecord(entity, recordID string) error {
+	return c.do("DELETE", c.entityURL(entity, "/"+recordID, nil), nil, nil)
 }
 
-// SystemDynamicEntityIDs returns a map of entity name -> dynamicEntityId for
-// every existing system dynamic entity. The id is needed to update (PUT) an
-// entity; a missing name means it must be created (POST). The management list
-// nests each entity's schema under a key equal to the entity name, alongside
-// meta fields like dynamicEntityId — so the name is the schema-bearing key.
-func (c *Client) SystemDynamicEntityIDs(version string) (map[string]string, error) {
-	var raw struct {
-		DynamicEntities []map[string]any `json:"dynamic_entities"`
+// ── dynamic-entity definitions (one-time management) ────────────────────────
+//
+// These use the v7.0.0 management API, which is the same for every space: the
+// BANK_ID segment is a bank id, or the literal SYS for the system space (older
+// versions reject SYS with OBP-30001). Its request and response bodies name the
+// entity in `entity_name` and carry the schema under `schema`.
+
+func (c *Client) managementURL() string {
+	space := c.spaceID
+	if space == "" {
+		space = "SYS"
 	}
-	if err := c.do("GET", c.managementURL(version), nil, &raw); err != nil {
+	return fmt.Sprintf("%s/obp/v7.0.0/management/banks/%s/dynamic-entities", c.baseURL, url.PathEscape(space))
+}
+
+// Space describes where the entities live, for log messages.
+func (c *Client) Space() string {
+	if c.spaceID == "" {
+		return "system level"
+	}
+	return "bank " + c.spaceID
+}
+
+// DynamicEntityIDs returns a map of entity name -> dynamic_entity_id for every
+// dynamic entity defined in the client's space. The id is needed to update
+// (PUT) an entity; a missing name means it must be created (POST).
+func (c *Client) DynamicEntityIDs() (map[string]string, error) {
+	var raw struct {
+		DynamicEntities []struct {
+			DynamicEntityID string `json:"dynamic_entity_id"`
+			EntityName      string `json:"entity_name"`
+		} `json:"dynamic_entities"`
+	}
+	if err := c.do("GET", c.managementURL(), nil, &raw); err != nil {
 		return nil, err
 	}
 	ids := make(map[string]string)
 	for _, e := range raw.DynamicEntities {
-		id, _ := e["dynamicEntityId"].(string)
-		if id == "" {
-			continue
-		}
-		for k, v := range e {
-			if m, ok := v.(map[string]any); ok {
-				if _, hasProps := m["properties"]; hasProps {
-					ids[k] = id
-				}
-			}
+		if e.DynamicEntityID != "" && e.EntityName != "" {
+			ids[e.EntityName] = e.DynamicEntityID
 		}
 	}
 	return ids, nil
 }
 
-func (c *Client) CreateSystemDynamicEntity(definition any, version string) (map[string]any, error) {
+// EntityDefinition is a v7.0.0 dynamic entity definition request body.
+type EntityDefinition struct {
+	EntityName        string         `json:"entity_name"`
+	HasPersonalEntity bool           `json:"has_personal_entity"`
+	Schema            map[string]any `json:"schema"`
+}
+
+func (c *Client) CreateDynamicEntity(definition EntityDefinition) (map[string]any, error) {
 	var out map[string]any
-	err := c.do("POST", c.managementURL(version), definition, &out)
+	err := c.do("POST", c.managementURL(), definition, &out)
 	return out, err
 }
 
-// UpdateSystemDynamicEntity replaces the definition of an existing system
-// dynamic entity (PUT /management/system-dynamic-entities/{id}).
-func (c *Client) UpdateSystemDynamicEntity(entityID string, definition any, version string) (map[string]any, error) {
+// UpdateDynamicEntity replaces the definition of an existing dynamic entity in
+// the client's space.
+func (c *Client) UpdateDynamicEntity(entityID string, definition EntityDefinition) (map[string]any, error) {
 	var out map[string]any
-	err := c.do("PUT", c.managementURL(version)+"/"+entityID, definition, &out)
+	err := c.do("PUT", c.managementURL()+"/"+url.PathEscape(entityID), definition, &out)
 	return out, err
 }

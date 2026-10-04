@@ -1,5 +1,5 @@
-// Package obp is a minimal OBP client: DirectLogin auth plus the dynamic-entity
-// read and write calls the cacher needs. The auth flow mirrors the tokenizer's
+// Package obp is a minimal OBP client: DirectLogin auth plus the v7.0.0
+// dynamic-entity read and write calls the cacher needs. The auth flow mirrors the tokenizer's
 // client (sibling repo OGCR-Chain); the write methods (POST/PUT and entity
 // creation) are new — the tokenizer only ever reads.
 package obp
@@ -134,50 +134,81 @@ func (c *Client) do(method, fullURL string, body any, out any) error {
 	return json.NewDecoder(resp.Body).Decode(out)
 }
 
-func (c *Client) entityURL(entity, suffix string, params url.Values) string {
-	u := c.baseURL + "/obp/dynamic-entity"
-	if c.spaceID != "" {
-		u += "/banks/" + url.PathEscape(c.spaceID)
+// space is the BANK_ID path segment for the client's space: the bank id, or the
+// literal SYS for system level entities (OBP_ENTITY_SPACE_ID set to "").
+func (c *Client) space() string {
+	if c.spaceID == "" {
+		return "SYS"
 	}
-	u += "/" + entity + suffix
+	return c.spaceID
+}
+
+// entityURL is a v7.0.0 dynamic-entity record URL in the client's space.
+func (c *Client) entityURL(entity, suffix string, params url.Values) string {
+	u := fmt.Sprintf("%s/obp/v7.0.0/banks/%s/dynamic-entities/%s%s", c.baseURL, url.PathEscape(c.space()), entity, suffix)
 	if len(params) > 0 {
 		u += "?" + params.Encode()
 	}
 	return u
 }
 
+// unwrap returns the record fields of a v7.0.0 record body, which nests them
+// under the entity name next to a `metadata` object.
+func unwrap(entity string, body map[string]any) map[string]any {
+	if inner, ok := body[entity].(map[string]any); ok {
+		return inner
+	}
+	return body
+}
+
+// pageSize is how many records GetRecords asks for per request.
+const pageSize = 500
+
 // GetRecords returns dynamic-entity records, optionally filtered by query
-// params. OBP wraps lists as {"<entity>_list": [...]}.
+// params, reading every page. OBP wraps lists as {"<entity>_list": [...]}.
 func (c *Client) GetRecords(entity string, params url.Values) ([]map[string]any, error) {
-	var raw map[string]json.RawMessage
-	if err := c.do("GET", c.entityURL(entity, "", params), nil, &raw); err != nil {
-		return nil, err
+	var all []map[string]any
+	for offset := 0; ; offset += pageSize {
+		q := url.Values{}
+		for k, v := range params {
+			q[k] = v
+		}
+		q.Set("obp_limit", fmt.Sprint(pageSize))
+		q.Set("obp_offset", fmt.Sprint(offset))
+
+		var raw map[string]json.RawMessage
+		if err := c.do("GET", c.entityURL(entity, "", q), nil, &raw); err != nil {
+			return nil, err
+		}
+		var page []map[string]any
+		if listJSON, ok := raw[entity+"_list"]; ok {
+			if err := json.Unmarshal(listJSON, &page); err != nil {
+				return nil, err
+			}
+		}
+		for _, r := range page {
+			all = append(all, unwrap(entity, r))
+		}
+		if len(page) != pageSize {
+			return all, nil
+		}
 	}
-	listJSON, ok := raw[entity+"_list"]
-	if !ok {
-		return nil, nil
-	}
-	var list []map[string]any
-	if err := json.Unmarshal(listJSON, &list); err != nil {
-		return nil, err
-	}
-	return list, nil
 }
 
 func (c *Client) CreateRecord(entity string, record any) (map[string]any, error) {
 	var out map[string]any
 	err := c.do("POST", c.entityURL(entity, "", nil), record, &out)
-	return out, err
+	return unwrap(entity, out), err
 }
 
 func (c *Client) UpdateRecord(entity, recordID string, record any) (map[string]any, error) {
 	var out map[string]any
-	err := c.do("PUT", c.entityURL(entity, "/"+recordID, nil), record, &out)
-	return out, err
+	err := c.do("PUT", c.entityURL(entity, "/"+url.PathEscape(recordID), nil), record, &out)
+	return unwrap(entity, out), err
 }
 
 func (c *Client) DeleteRecord(entity, recordID string) error {
-	return c.do("DELETE", c.entityURL(entity, "/"+recordID, nil), nil, nil)
+	return c.do("DELETE", c.entityURL(entity, "/"+url.PathEscape(recordID), nil), nil, nil)
 }
 
 // ── dynamic-entity definitions (one-time management) ────────────────────────
@@ -188,11 +219,7 @@ func (c *Client) DeleteRecord(entity, recordID string) error {
 // entity in `entity_name` and carry the schema under `schema`.
 
 func (c *Client) managementURL() string {
-	space := c.spaceID
-	if space == "" {
-		space = "SYS"
-	}
-	return fmt.Sprintf("%s/obp/v7.0.0/management/banks/%s/dynamic-entities", c.baseURL, url.PathEscape(space))
+	return fmt.Sprintf("%s/obp/v7.0.0/management/banks/%s/dynamic-entities", c.baseURL, url.PathEscape(c.space()))
 }
 
 // Space describes where the entities live, for log messages.

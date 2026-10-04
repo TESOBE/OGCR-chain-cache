@@ -256,6 +256,7 @@ func (c *Client) DynamicEntityIDs() (map[string]string, error) {
 type EntityDefinition struct {
 	EntityName        string         `json:"entity_name"`
 	HasPersonalEntity bool           `json:"has_personal_entity"`
+	HasPublicAccess   bool           `json:"has_public_access"`
 	Schema            map[string]any `json:"schema"`
 }
 

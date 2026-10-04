@@ -1,6 +1,7 @@
 {
   "certification_on_chain": {
     "description": "Cache of CertificationNFT data minted on the OGCR chain (chain id 2025). One record per certification_of_compliance_id, populated by OGCR-chain-cache reading the chain.",
+    "has_public_access": true,
     "required": ["certification_of_compliance_id", "token_id"],
     "properties": {
       "certification_of_compliance_id": {

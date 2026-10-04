@@ -174,6 +174,10 @@ bank id on the OBP user. Idempotent — an entity that already exists is updated
 (PUT), so the previously-deployed `parcel_on_chain` (old CarbonProjectNFT shape)
 is migrated to the new schema.
 
+Every definition in `entities/` sets `"has_public_access": true`, so the cached
+chain data and `chain_sync_status` can be read without a login. `setup-entity`
+moves that flag out of the schema to the top level of the v7.0.0 request body.
+
 ```bash
 make setup-entity        # go run ./cmd/setup-entity
 ```

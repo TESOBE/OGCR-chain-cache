@@ -1,6 +1,7 @@
 {
   "carbon_credit_batch_on_chain": {
     "description": "Cache of CarbonCreditBatchNFT data minted on the OGCR chain (chain id 2025). One record per batch token. A batch is one (activity_nft_id, credit_type) pair, and each batch owns an ERC-6551 token-bound account that holds its CarbonCredit (ERC-20) balance. Populated by OGCR-chain-cache reading the chain. Join to `activity_on_chain` on activity_nft_id = token_id to reach the OBP activity.",
+    "has_public_access": true,
     "required": ["batch_key", "token_id", "credit_type"],
     "properties": {
       "batch_key": {

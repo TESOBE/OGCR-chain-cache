@@ -7,7 +7,9 @@
 // stale schema (e.g. the old CarbonProjectNFT-shaped parcel_on_chain) is fixed.
 //
 // Each file keeps the `{"<entity_name>": {<schema>}}` shape; it is turned into
-// the v7.0.0 body (entity_name + schema) here.
+// the v7.0.0 body (entity_name + schema) here. An access flag such as
+// `has_public_access` may sit in the schema object; it is moved out to the top
+// level of the body, where v7.0.0 expects it.
 //
 //	setup-entity [-dir entities]
 package main
@@ -83,6 +85,11 @@ func main() {
 			definition = obp.EntityDefinition{EntityName: name, Schema: schema}
 		}
 		name := definition.EntityName
+		if err := liftAccessFlags(&definition); err != nil {
+			slog.Error("invalid entity definition", "path", path, "err", err)
+			failed = append(failed, file)
+			continue
+		}
 
 		if id, ok := existing[name]; ok {
 			if _, err := client.UpdateDynamicEntity(id, definition); err != nil {
@@ -107,4 +114,20 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println("done")
+}
+
+// liftAccessFlags moves has_public_access out of the definition's schema, where
+// the entities/*.json files keep it, into the body field v7.0.0 reads.
+func liftAccessFlags(d *obp.EntityDefinition) error {
+	v, ok := d.Schema["has_public_access"]
+	if !ok {
+		return nil
+	}
+	b, ok := v.(bool)
+	if !ok {
+		return fmt.Errorf("has_public_access must be true or false, got %v", v)
+	}
+	d.HasPublicAccess = b
+	delete(d.Schema, "has_public_access")
+	return nil
 }

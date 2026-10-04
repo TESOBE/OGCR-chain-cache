@@ -1,6 +1,7 @@
 {
   "chain_sync_status": {
     "description": "Liveness record for OGCR-chain-cache: one record per chain, rewritten at the end of every mirror run. The other *_on_chain entities say what is on the chain; this says when anything last looked. Without it a quiet chain is indistinguishable from a dead mirror, because the newest mint could be old for either reason. Consumers should treat a record older than a few multiples of interval_seconds as stale.",
+    "has_public_access": true,
     "required": ["sync_key"],
     "properties": {
       "sync_key": {

@@ -3,7 +3,7 @@
 # entities once (same as `make run`). Re-running is safe: records are upserted
 # by business key. Name token types to limit it to those.
 #
-#   scripts/run-from-ogcr-chain.sh [parcel] [activity] [certification] [credit]
+#   scripts/sync-from-ogcr-chain.sh [parcel] [activity] [certification] [credit]
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

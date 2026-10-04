@@ -197,7 +197,8 @@ go run ./cmd/cacher activity
 ```
 
 It only accepts entities defined in `entities/`. Deleting needs
-`CanDeleteDynamicEntityRecord_<entity>` at the space's bank id.
+`CanDeleteDynamicEntityRecord_<entity>` at the space's bank id. To empty every
+`*_on_chain` entity at once, use `scripts/delete-records.sh` (see Scripts).
 
 ## Run
 
@@ -219,6 +220,27 @@ an error, so a forgotten address is not mistaken for "nothing to mirror".
 Re-running is safe: existing records are updated in place (matched by business
 key), new ones are created.
 
+## Scripts
+
+`scripts/` wraps the commands above for the common cases. Each runs from any
+directory, reads `.env`, and works in the `OBP_ENTITY_SPACE_ID` space.
+
+| Script | Runs | Does |
+|---|---|---|
+| `scripts/delete-records.sh [ENTITY...]` | `cmd/delete-records` | Lists the records of every `*_on_chain` entity in `entities/` (or just the ones named), asks once, then deletes them. Definitions and Roles stay. |
+| `scripts/setup-entities.sh` | `cmd/setup-entity` | Creates or updates the entities from `entities/` (same as `make setup-entity`). |
+| `scripts/sync-from-ogcr-chain.sh [TYPE...]` | `cmd/cacher` | Mirrors the OGCR chain set by `RPC_URL` in `.env` into OBP once (same as `make run`). |
+| `scripts/sync-from-local-anvil-chain.sh [TYPE...]` | `cmd/cacher` | Mirrors the local anvil chain into OBP once, loading `local-anvil.env` and then `.env.local` over `.env` (same as `make run-local`). |
+
+`TYPE` is any of `parcel`, `activity`, `certification`, `credit`. A full reset
+of the cache, e.g. after changing a definition in `entities/`:
+
+```bash
+scripts/delete-records.sh
+scripts/setup-entities.sh
+scripts/sync-from-ogcr-chain.sh     # or scripts/sync-from-local-anvil-chain.sh
+```
+
 ## Layout
 
 ```
@@ -231,6 +253,7 @@ internal/cache/               upsert chain data into the *_on_chain entities
 cmd/cacher/                   entry point: chain → *_on_chain
 cmd/setup-entity/             one-time entity create/update
 cmd/delete-records/           empty one *_on_chain entity (the cacher refills it)
+scripts/                      shell wrappers: delete, set up, sync (see Scripts)
 ```
 
 Bindings are generated from the contract ABIs in

@@ -4,7 +4,7 @@
 # loaded over .env, then .env.local (gitignored) over that. Override the deploy
 # file's path with LOCAL_CHAIN_ENV=... Name token types to limit it to those.
 #
-#   scripts/run-from-local-anvil-chain.sh [parcel] [activity] [certification] [credit]
+#   scripts/sync-from-local-anvil-chain.sh [parcel] [activity] [certification] [credit]
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

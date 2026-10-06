@@ -54,7 +54,8 @@ func main() {
 		slog.Error("failed to init chain reader", "err", err)
 		os.Exit(1)
 	}
-	client := obp.NewClient(cfg.OBPURL, cfg.OBPUsername, cfg.OBPPassword, cfg.OBPConsumerKey, cfg.EntitySpaceID)
+	client := obp.NewClient(cfg.OBPURL, cfg.OIDCIssuer, cfg.OIDCClientID, cfg.OIDCClientSecret, cfg.EntitySpaceID)
+	declarePlatformApp(client)
 
 	// Which token types to mirror (default: all).
 	want := map[string]bool{}
@@ -102,6 +103,20 @@ func main() {
 	}
 
 	recordSyncStatus(ctx, reader, client, cfg.IntervalSeconds, results)
+}
+
+// declarePlatformApp declares the Scopes this app needs, once per run, and says
+// which are not granted yet. A failure only warns: the run goes on, and any
+// write a missing Scope blocks fails on its own with OBP's message.
+func declarePlatformApp(client *obp.Client) {
+	app, err := client.DeclareFor(cache.Entities)
+	if err != nil {
+		slog.Warn("could not declare the Platform App's Scopes; an administrator must mark this Consumer as a Platform App", "err", err)
+		return
+	}
+	if missing := app.Missing(); len(missing) > 0 {
+		slog.Warn("Platform App is missing Scopes; an administrator must grant them to its Consumer", "consumer_id", app.ConsumerID, "missing", obp.ScopeNames(missing))
+	}
 }
 
 // mirrorResult summarises one mirror so the run can be recorded in

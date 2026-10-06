@@ -12,7 +12,7 @@ RUN apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=builder /out/cacher /usr/local/bin/cacher
 COPY --from=builder /out/setup-entity /usr/local/bin/setup-entity
-# setup-entity reads entities/parcel_on_chain.json relative to the workdir.
+# setup-entity reads the entities/*.json definitions relative to the workdir.
 COPY entities/ ./entities/
 # Default to the cacher service; run `setup-entity` by overriding the command.
 CMD ["cacher"]

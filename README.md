@@ -41,7 +41,8 @@ Most records hold the token's on-chain fields plus mint provenance (`token_id`,
 | `carbon_credit_balance_on_chain` | `owner_address` | `balance`, `decimals`, `symbol`, `holder_type`, `batch_token_id` |
 | `chain_sync_status` | `sync_key` | not a mirror: the liveness record for this tool, see below |
 
-It only ever reads the chain (no private key) and writes to OBP via DirectLogin.
+It only ever reads the chain (no private key) and writes to OBP as a Platform App
+(see [Authentication](#authentication-a-platform-app)).
 
 This tool is the source of truth for these entities: their definitions live here, in
 `entities/`, and OGCR-DynamicEntities ignores them in its spreadsheet. In
@@ -111,7 +112,7 @@ string field and not for an integer one; it is exactly as unique as `token_id`.
 ## Setup
 
 ```bash
-cp .env.example .env        # then fill in OBP credentials + the 3 contract addresses
+cp .env.example .env        # then fill in the OIDC client + the 3 contract addresses
 go build ./...              # or: make build
 ```
 
@@ -123,17 +124,67 @@ either unset and the cacher skips that mirror and says so, rather than failing.
 That keeps it runnable against a chain where the credit contracts are not
 deployed yet.
 
+### Authentication: a Platform App
+
+All three tools (`cacher`, `setup-entity`, `delete-records`) call OBP as their own
+application, not as a User, the way OBP-Sentinel does. There is no DirectLogin.
+They get a token from OBP-OIDC with the OAuth2 client credentials grant (the
+token endpoint is discovered from `OIDC_ISSUER/.well-known/openid-configuration`)
+and send it as `Authorization: Bearer`. A token is replaced 30 seconds before it
+expires; a 401 gets one retry with a new token.
+
+The Roles they need are **Scopes granted to the app's Consumer**, not
+Entitlements of a User. Setting it up:
+
+1. Create an OIDC client for this app in OBP-OIDC and put its id and secret in
+   `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET`.
+2. Run any of the tools once. OBP creates a Consumer for the client on its first
+   call. The tool's attempt to declare its Scopes is refused, and the log names
+   the Consumer's `CONSUMER_ID`.
+3. An administrator marks that Consumer as a Platform App:
+   `POST /obp/v7.0.0/management/platform-apps`.
+4. Run `make setup-entity`. Each tool declares the Scopes it needs
+   (`PUT /obp/v7.0.0/consumers/current/platform-app`) and logs any it does not
+   hold yet.
+5. The administrator sees them in `GET /obp/v7.0.0/management/platform-apps`
+   and grants them with `POST /obp/v7.0.0/consumers/CONSUMER_ID/scopes`.
+
+The Scopes, all at the `OBP_ENTITY_SPACE_ID` bank id (`SYS` for system level):
+
+| Scope | Used by |
+|---|---|
+| `CanGetDynamicEntityDefinitions` | `setup-entity` |
+| `CanCreateDynamicEntityDefinition` | `setup-entity` |
+| `CanUpdateDynamicEntityDefinition` | `setup-entity` |
+| `CanGetDynamicEntityRecord_<entity>` | `cacher`, `delete-records` |
+| `CanCreateDynamicEntityRecord_<entity>` | `cacher` |
+| `CanUpdateDynamicEntityRecord_<entity>` | `cacher` |
+| `CanDeleteDynamicEntityRecord_<entity>` | `delete-records` (declared optional) |
+
+where `<entity>` is each `*_on_chain` entity and `chain_sync_status`.
+
+OBP refuses a whole declaration that names a Role that does not exist, and a
+record Role only exists once its entity does. So the tools declare record Roles
+only for the entities that already exist, and the definition Roles alone until
+`CanGetDynamicEntityDefinitions` is granted. On a fresh install that takes two
+rounds: grant the definition Scopes, run `make setup-entity` again (it creates
+the entities, then declares their record Roles), and grant those.
+
+Every definition in `entities/` sets `"auth_mode": "UserOrApplication"`. OBP's
+default, `UserOnly`, would refuse the app's token on the record endpoints; with
+`UserOrApplication` a User holding the matching Entitlements still has access.
+
 ### Running against a local OBP
 
 `.env.example` ships with the shared DCR and the shared chain. For local
 development, point `OBP_URL` at your local OBP and `RPC_URL` at a local node,
-with credentials for a consumer registered on that local OBP:
+with an OIDC client on the local OBP-OIDC:
 
 ```bash
 OBP_URL=http://localhost:8080
-OBP_USERNAME=...
-OBP_PASSWORD=...
-OBP_CONSUMER_KEY=...        # a consumer registered on the LOCAL OBP
+OIDC_ISSUER=http://localhost:9000/obp-oidc
+OIDC_CLIENT_ID=...          # an OIDC client on the LOCAL OBP-OIDC
+OIDC_CLIENT_SECRET=...
 RPC_URL=http://127.0.0.1:8545
 ```
 
@@ -141,10 +192,9 @@ The entities live in the bank (aka Space) named by `OBP_ENTITY_SPACE_ID`,
 default `ogcr`: the same variable OGCR-DynamicEntities and OGCR-App read, so set
 it to the same value in all three. Set it to the empty string for system level.
 
-The OBP user needs `CanCreateDynamicEntityDefinition` and
-`CanUpdateDynamicEntityDefinition` at that bank id (`SYS` for system level),
-plus the per-entity roles below; a super admin (`super_admin_user_ids` in the
-API props) satisfies all of them.
+The app's Consumer needs the Scopes listed under
+[Authentication](#authentication-a-platform-app) at that bank id (`SYS` for
+system level).
 
 **Keep the two halves consistent.** A local chain paired with a shared OBP would
 mirror throwaway fixture tokens into the real registry. If your `.env` has to
@@ -168,24 +218,23 @@ deleted before its schema can be migrated.
 
 ### One-time: create/update the `*_on_chain` entities
 
-Uses the v7.0.0 management API in the `OBP_ENTITY_SPACE_ID` space, and needs
-`CanCreateDynamicEntityDefinition` / `CanUpdateDynamicEntityDefinition` at that
-bank id on the OBP user. Idempotent — an entity that already exists is updated in place
+Uses the v7.0.0 management API in the `OBP_ENTITY_SPACE_ID` space, and needs the
+definition Scopes at that bank id on the app's Consumer. Idempotent — an entity that already exists is updated in place
 (PUT), so the previously-deployed `parcel_on_chain` (old CarbonProjectNFT shape)
 is migrated to the new schema.
 
 Every definition in `entities/` sets `"has_public_access": true`, so the cached
-chain data and `chain_sync_status` can be read without a login. `setup-entity`
-moves that flag out of the schema to the top level of the v7.0.0 request body.
+chain data and `chain_sync_status` can be read without a login, and
+`"auth_mode": "UserOrApplication"`, so the Platform App can write them.
+`setup-entity` moves both out of the schema to the top level of the v7.0.0
+request body.
 
 ```bash
 make setup-entity        # go run ./cmd/setup-entity
 ```
 
-The OBP user also needs the per-entity `CanGetDynamicEntityRecord_<entity>`,
-`CanCreateDynamicEntityRecord_<entity>` and `CanUpdateDynamicEntityRecord_<entity>`
-roles, at the same bank id, for each `*_on_chain` entity and `chain_sync_status`
-before the cacher can read/write records.
+When it is done, `setup-entity` declares the record Scopes of the entities it has
+created; the cacher can read and write records once they are granted.
 
 ### Emptying an entity
 
@@ -251,7 +300,7 @@ scripts/sync-from-ogcr-chain.sh     # or scripts/sync-from-local-anvil-chain.sh
 entities/*.json               OBP dynamic-entity definitions (for setup)
 config/                       env/.env loading (contract addresses)
 internal/contract/            abigen bindings for the five contracts
-internal/obp/                 OBP DirectLogin auth + dynamic-entity read/write + management
+internal/obp/                 Platform App auth + dynamic-entity read/write + management
 internal/eth/                 chain reader (tokens + balances → OnChain* structs)
 internal/cache/               upsert chain data into the *_on_chain entities
 cmd/cacher/                   entry point: chain → *_on_chain

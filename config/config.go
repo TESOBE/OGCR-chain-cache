@@ -10,7 +10,8 @@ import (
 )
 
 // Config holds everything the cacher needs. It only ever reads the chain (no
-// private key) and writes to OBP via DirectLogin. The chain side is the OGCR
+// private key) and writes to OBP as a Platform App, with an OAuth2 client
+// credentials token from OBP-OIDC. The chain side is the OGCR
 // token family; this tool mirrors every deployed contract in it into the
 // matching `*_on_chain` OBP dynamic entity.
 //
@@ -19,10 +20,15 @@ import (
 // have not been deployed yet; the credit mirrors are skipped when they are
 // unset.
 type Config struct {
-	OBPURL         string
-	OBPUsername    string
-	OBPPassword    string
-	OBPConsumerKey string
+	OBPURL string
+
+	// OIDCIssuer is the OBP-OIDC issuer URL; its token endpoint is discovered
+	// from <issuer>/.well-known/openid-configuration. OIDCClientID and
+	// OIDCClientSecret are the app's OIDC client; OBP makes it a Consumer on
+	// its first call.
+	OIDCIssuer       string
+	OIDCClientID     string
+	OIDCClientSecret string
 
 	// EntitySpaceID is the bank (aka Space) the *_on_chain entities live in:
 	// OBP_ENTITY_SPACE_ID, the same variable OGCR-DynamicEntities and OGCR-App
@@ -59,9 +65,9 @@ func Load() (*Config, error) {
 
 	required := []string{
 		"OBP_URL",
-		"OBP_USERNAME",
-		"OBP_PASSWORD",
-		"OBP_CONSUMER_KEY",
+		"OIDC_ISSUER",
+		"OIDC_CLIENT_ID",
+		"OIDC_CLIENT_SECRET",
 		"RPC_URL",
 		"PARCEL_CONTRACT_ADDRESS",
 		"ACTIVITY_CONTRACT_ADDRESS",
@@ -102,9 +108,9 @@ func Load() (*Config, error) {
 
 	return &Config{
 		OBPURL:                       os.Getenv("OBP_URL"),
-		OBPUsername:                  os.Getenv("OBP_USERNAME"),
-		OBPPassword:                  os.Getenv("OBP_PASSWORD"),
-		OBPConsumerKey:               os.Getenv("OBP_CONSUMER_KEY"),
+		OIDCIssuer:                   os.Getenv("OIDC_ISSUER"),
+		OIDCClientID:                 os.Getenv("OIDC_CLIENT_ID"),
+		OIDCClientSecret:             os.Getenv("OIDC_CLIENT_SECRET"),
 		EntitySpaceID:                strings.TrimSpace(space),
 		RPCURL:                       os.Getenv("RPC_URL"),
 		ParcelContractAddress:        os.Getenv("PARCEL_CONTRACT_ADDRESS"),

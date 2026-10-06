@@ -2,6 +2,7 @@
   "activity_on_chain": {
     "description": "Cache of ActivityNFT data minted on the OGCR chain (chain id 2025). One record per activity_id, populated by OGCR-chain-cache reading the chain.",
     "has_public_access": true,
+    "auth_mode": "UserOrApplication",
     "required": [
       "activity_id",
       "token_id"

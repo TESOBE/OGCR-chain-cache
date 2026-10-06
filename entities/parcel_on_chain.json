@@ -2,6 +2,7 @@
   "parcel_on_chain": {
     "description": "Cache of ParcelNFT data minted on the OGCR chain (chain id 2025). One record per parcel_id, populated by OGCR-chain-cache reading the chain. Does not mutate the source `parcel` entity.",
     "has_public_access": true,
+    "auth_mode": "UserOrApplication",
     "required": ["parcel_id", "token_id"],
     "properties": {
       "parcel_id": {

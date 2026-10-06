@@ -6,7 +6,9 @@
 //
 // Only entities defined in the -dir directory (entities/*.json) are accepted, so
 // it can't be pointed at an entity this tool doesn't own. Without -yes it only
-// lists the records.
+// lists the records. It runs as the Platform App, whose Consumer needs the
+// CanGetDynamicEntityRecord_ and CanDeleteDynamicEntityRecord_ Scopes for the
+// entity; setup-entity and the cacher declare them.
 //
 //	delete-records [-dir entities] [-yes] ENTITY
 package main
@@ -48,7 +50,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "✗ config error: %v\n", err)
 		os.Exit(1)
 	}
-	client := obp.NewClient(cfg.OBPURL, cfg.OBPUsername, cfg.OBPPassword, cfg.OBPConsumerKey, cfg.EntitySpaceID)
+	client := obp.NewClient(cfg.OBPURL, cfg.OIDCIssuer, cfg.OIDCClientID, cfg.OIDCClientSecret, cfg.EntitySpaceID)
 
 	fmt.Printf("%s at %s, %s\n", entity, cfg.OBPURL, client.Space())
 	records, err := client.GetRecords(entity, nil)

@@ -20,6 +20,9 @@ const (
 	SyncStatusEntity    = "chain_sync_status"
 )
 
+// Entities is every entity the cacher writes.
+var Entities = []string{ParcelEntity, ActivityEntity, CertificationEntity, CreditBatchEntity, CreditBalanceEntity, SyncStatusEntity}
+
 // Run status values for SyncStatus.RunStatus.
 const (
 	RunStatusOK      = "ok"

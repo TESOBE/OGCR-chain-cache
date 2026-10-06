@@ -2,6 +2,7 @@
   "carbon_credit_balance_on_chain": {
     "description": "Cache of CarbonCredit (ERC-20) balances on the OGCR chain (chain id 2025). One record per holding address, covering both operator wallets and the ERC-6551 token-bound accounts of credit batches. Populated by OGCR-chain-cache, which derives the holder set from Transfer events and then reads each balance at the current head. Balances are current-state, not historical: each record is only true as of block_number.",
     "has_public_access": true,
+    "auth_mode": "UserOrApplication",
     "required": ["owner_address"],
     "properties": {
       "owner_address": {

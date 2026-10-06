@@ -236,6 +236,31 @@ make setup-entity        # go run ./cmd/setup-entity
 When it is done, `setup-entity` declares the record Scopes of the entities it has
 created; the cacher can read and write records once they are granted.
 
+### Serve mode: a loop with a status page
+
+`cacher` mirrors once and exits. With `-serve` it keeps running instead: it
+mirrors every `SYNC_INTERVAL_SECONDS` (default 30) and serves a status page:
+
+```bash
+make serve               # go run ./cmd/cacher -serve 127.0.0.1:8766
+make serve-local         # the same against the local chain and OBP
+```
+
+- `/` shows the last run (status, head block, records and errors per mirror,
+  whether `chain_sync_status` was written), the Platform App's declared Scopes
+  and which are held, the last run's errors, and recent runs. It refreshes
+  every 5 seconds and has a **Run now** button.
+- `/health` returns the same status as JSON, for scripts and the dev-env page.
+
+The page shows only this process's own state, so it needs no OBP login. Bind it
+to localhost: anyone who can reach it sees the error messages and can trigger a
+run. URLs on the page are cut to their host, since an RPC URL can carry an API
+key.
+
+In serve mode the Platform App's Scopes are declared before every run until all
+the required ones are held, so a grant shows on the page by the next run; after
+that they are declared again hourly.
+
 ### Emptying an entity
 
 OBP only allows some definition changes, such as retyping a field, on an entity

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="5">
+<title>OGCR Chain Cache</title>
+<style>
+  :root {
+    --background: #f6f7f9;
+    --card: #ffffff;
+    --text: #1f2933;
+    --muted: #6b7280;
+    --border: #e2e5ea;
+    --ok: #16a34a;
+    --warn: #d97706;
+    --bad: #dc2626;
+    --idle: #9ca3af;
+    --button: #3f3f46;
+    --button-text: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #111418;
+      --card: #1a1e24;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #2a2f37;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --bad: #f87171;
+      --idle: #6b7280;
+      --button: #e4e4e7;
+      --button-text: #18181b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 48px;
+    background: var(--background);
+    color: var(--text);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 16px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 22px; margin: 0; }
+  .sub { color: var(--muted); font-size: 13px; }
+  section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    overflow-x: auto;
+  }
+  h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted); margin: 0 0 10px;
+  }
+  .status { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--idle); flex: none; }
+  .s-ok .dot, .dot.s-ok { background: var(--ok); }
+  .s-partial .dot, .dot.s-partial { background: var(--warn); }
+  .s-no_chain .dot, .dot.s-no_chain { background: var(--bad); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px 16px; margin-top: 12px; }
+  .facts div { font-size: 13px; color: var(--muted); }
+  .facts b { display: block; color: var(--text); font-weight: 500; font-size: 15px; overflow-wrap: anywhere; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 4px 8px 6px 0; }
+  td { padding: 6px 8px 6px 0; border-top: 1px solid var(--border); vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  code, .mono { font: 12.5px ui-monospace, "SF Mono", Menlo, monospace; }
+  .held { color: var(--ok); }
+  .missing { color: var(--bad); font-weight: 500; }
+  .muted { color: var(--muted); }
+  .bad { color: var(--bad); }
+  ul.errors { margin: 0; padding: 0; list-style: none; }
+  ul.errors li { padding: 6px 0; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
+  ul.errors li:first-child { border-top: none; }
+  button {
+    font: inherit; font-weight: 500; cursor: pointer;
+    background: var(--button); color: var(--button-text);
+    border: none; border-radius: 8px; padding: 8px 14px;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🔗 OGCR Chain Cache</h1>
+      <div class="sub">chain {{.ChainID}} ➜ OBP {{.Space}} · refreshes every 5s · {{.Now}}</div>
+    </div>
+    <form method="post" action="/run">
+      <button type="submit" {{if .Running}}disabled{{end}}>{{if .Running}}Running…{{else}}Run now{{end}}</button>
+    </form>
+  </header>
+
+  <section class="s-{{.Status}}">
+    <div class="status"><span class="dot"></span>{{.StatusLabel}}</div>
+    <div class="facts">
+      <div>Last run<b>{{if .LastRunAgo}}{{.LastRunAgo}} ago{{else}}not yet{{end}}</b></div>
+      <div>Took<b>{{if .LastRunTook}}{{.LastRunTook}}{{else}}–{{end}}</b></div>
+      <div>{{if .Running}}Running for<b>{{.RunningFor}}</b>{{else}}Next run in<b>{{if .NextRunIn}}{{.NextRunIn}}{{else}}–{{end}}</b>{{end}}</div>
+      <div>Every<b>{{.Interval}}</b></div>
+      <div>Head block<b>{{if .HeadBlock}}{{.HeadBlock}}{{else}}–{{end}}</b></div>
+      <div>chain_sync_status<b>{{if .SyncRecorded}}written{{else if .LastRunAgo}}<span class="bad">not written</span>{{else}}–{{end}}</b></div>
+      <div>OBP<b class="mono">{{.OBPURL}}</b></div>
+      <div>Chain RPC<b class="mono">{{.RPCURL}}</b></div>
+    </div>
+  </section>
+
+  {{if .Mirrors}}
+  <section>
+    <h2>Last run</h2>
+    <table>
+      <tr><th>Mirror</th><th class="num">Records written</th><th class="num">Errors</th></tr>
+      {{range .Mirrors}}
+      <tr>
+        <td><code>{{.Name}}</code></td>
+        {{if .Ran}}
+        <td class="num">{{.Count}}</td>
+        <td class="num">{{if .Errors}}<span class="bad">{{.Errors}}</span>{{else}}0{{end}}</td>
+        {{else}}
+        <td class="num muted" colspan="2">skipped</td>
+        {{end}}
+      </tr>
+      {{end}}
+    </table>
+  </section>
+  {{end}}
+
+  <section>
+    <h2>Platform App</h2>
+    {{if .AppErr}}
+      <p class="bad" style="margin:0">Could not declare the app's Scopes.</p>
+      <p class="mono" style="overflow-wrap:anywhere">{{.AppErr}}</p>
+      <p class="hint">If OBP says the Consumer is not a Platform App, an administrator must mark it:
+        <code>POST /obp/v7.0.0/management/platform-apps</code> with the CONSUMER_ID named in the message above.</p>
+    {{else if .App}}
+      <div class="facts" style="margin:0 0 12px">
+        <div>Consumer<b class="mono">{{.App.ConsumerID}}</b></div>
+        {{if .App.Label}}<div>Label<b>{{.App.Label}}</b></div>{{end}}
+        <div>Scopes<b>{{if .AppMissing}}<span class="missing">{{.AppMissing}} missing</span>{{else}}<span class="held">all held</span>{{end}}</b></div>
+      </div>
+      <table>
+        <tr><th>Scope</th><th>Bank</th><th>Held</th></tr>
+        {{range .App.RequiredScopes}}
+        <tr title="{{.NeededFor}}">
+          <td><code>{{.RoleName}}</code>{{if .Optional}} <span class="muted">(optional)</span>{{end}}</td>
+          <td><code>{{.BankID}}</code></td>
+          <td>{{if .Held}}<span class="held">✓ held</span>{{else if .Optional}}<span class="muted">not held</span>{{else}}<span class="missing">✗ missing</span>{{end}}</td>
+        </tr>
+        {{end}}
+      </table>
+      {{if .AppMissing}}
+      <p class="hint">An administrator grants these with <code>POST /obp/v7.0.0/consumers/{{.App.ConsumerID}}/scopes</code>.
+        Record Scopes are only declared for entities that exist, so run <code>make setup-entity-local</code> once the definition Scopes are granted.</p>
+      {{end}}
+    {{else}}
+      <p class="muted" style="margin:0">Not declared yet.</p>
+    {{end}}
+  </section>
+
+  {{if .Errors}}
+  <section>
+    <h2>Errors in the last run ({{len .Errors}})</h2>
+    <ul class="errors">
+      {{range .Errors}}<li class="mono">{{.}}</li>{{end}}
+    </ul>
+  </section>
+  {{end}}
+
+  {{if .History}}
+  <section>
+    <h2>Recent runs</h2>
+    <table>
+      <tr><th>Finished</th><th>Status</th><th class="num">Head block</th><th class="num">Records</th><th class="num">Errors</th><th class="num">Took</th></tr>
+      {{range .History}}
+      <tr>
+        <td class="mono">{{.At}}</td>
+        <td><span class="dot s-{{.Status}}" style="display:inline-block;width:8px;height:8px;margin-right:6px"></span>{{.Status}}</td>
+        <td class="num">{{if .HeadBlock}}{{.HeadBlock}}{{else}}–{{end}}</td>
+        <td class="num">{{.Records}}</td>
+        <td class="num">{{if .Errors}}<span class="bad">{{.Errors}}</span>{{else}}0{{end}}</td>
+        <td class="num">{{.Took}}</td>
+      </tr>
+      {{end}}
+    </table>
+  </section>
+  {{end}}
+</div>
+</body>
+</html>

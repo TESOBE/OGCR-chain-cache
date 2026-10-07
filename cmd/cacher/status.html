@@ -192,10 +192,36 @@
       </table>
       {{if .AppMissing}}
       <p class="hint">An administrator grants these with <code>POST /obp/v7.0.0/consumers/{{.App.ConsumerID}}/scopes</code>.
-        Record Scopes are only declared for entities that exist, so run <code>make setup-entity-local</code> once the definition Scopes are granted.</p>
+        Record Scopes are only declared for entities that exist; the cacher creates the missing ones once the definition Scopes are granted, then declares their record Scopes.</p>
       {{end}}
     {{else}}
       <p class="muted" style="margin:0">Not declared yet.</p>
+    {{end}}
+  </section>
+
+  <section>
+    <h2>Entity definitions</h2>
+    {{if .EntitySetupOff}}
+      <p class="muted" style="margin:0">Not applied by the cacher: <code>AUTO_SETUP_ENTITIES</code> is off. Run <code>setup-entity</code> to apply them.</p>
+    {{else if not .EntitySetup}}
+      <p class="muted" style="margin:0">Not applied yet.</p>
+    {{else if .EntitySetup.Err}}
+      <p class="bad" style="margin:0">Could not list the existing definitions ({{.EntitySetupAgo}} ago); retrying before each run.</p>
+      <p class="mono" style="overflow-wrap:anywhere">{{.EntitySetup.Err}}</p>
+      <p class="hint">The Platform App needs <code>CanGetDynamicEntityDefinitions</code>, <code>CanCreateDynamicEntityDefinition</code> and <code>CanUpdateDynamicEntityDefinition</code> at bank <code>{{.Space}}</code>.</p>
+    {{else}}
+      <table>
+        <tr><th>Entity</th><th>Applied {{.EntitySetupAgo}} ago</th></tr>
+        {{range .EntitySetup.Result.Outcomes}}
+        <tr>
+          <td><code>{{.Entity}}</code></td>
+          <td>{{if eq .Action "failed"}}<span class="missing">✗ failed</span> <span class="mono" style="overflow-wrap:anywhere">{{.Err}}</span>{{else if eq .Action "unchanged"}}<span class="held">up to date</span>{{else}}<span class="held">{{.Action}}</span>{{end}}</td>
+        </tr>
+        {{end}}
+      </table>
+      {{if .EntitySetup.Result.Failed}}
+      <p class="hint">Failed definitions are retried before each run. A schema change OBP refuses on an entity that has records needs <code>scripts/delete-records.sh</code> first.</p>
+      {{end}}
     {{end}}
   </section>
 

@@ -46,6 +46,9 @@ type runner struct {
 	fromBlock       uint64
 	intervalSeconds int
 	want            map[string]bool
+	// defs are the entity definitions to apply before mirroring; nil when
+	// AUTO_SETUP_ENTITIES is off.
+	defs []obp.EntityDefinition
 	// For the status page only.
 	chainID        uint64
 	obpURL, rpcURL string

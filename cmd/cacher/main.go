@@ -16,6 +16,10 @@
 //
 //	cacher -serve 127.0.0.1:8766 [types...]
 //
+// Before mirroring it creates any of its entities that are missing in OBP and
+// updates any whose definition has changed (AUTO_SETUP_ENTITIES=false turns
+// this off), so a new version brings its own schema with it.
+//
 // The credit contracts are optional. With neither CREDIT_BATCH_CONTRACT_ADDRESS
 // nor CREDIT_CONTRACT_ADDRESS set, a default run skips them and says so; asking
 // for `credit` explicitly is then an error, so a forgotten address is not
@@ -99,6 +103,14 @@ func main() {
 		want["credit"] = false
 	}
 
+	var defs []obp.EntityDefinition
+	if cfg.AutoSetupEntities {
+		if defs, err = loadDefinitions(); err != nil {
+			slog.Error("built-in entity definitions are broken", "err", err)
+			os.Exit(1)
+		}
+	}
+
 	rn := &runner{
 		reader:          reader,
 		client:          client,
@@ -108,10 +120,17 @@ func main() {
 		chainID:         reader.ChainID(),
 		obpURL:          cfg.OBPURL,
 		rpcURL:          cfg.RPCURL,
+		defs:            defs,
 	}
 
 	if *serveAddr == "" {
+		// Declared first, so the definition Scopes are asked for even when no
+		// entity exists yet, and again after creating one, so its record Scopes
+		// are asked for too.
 		declarePlatformApp(client)
+		if defs != nil && ensureEntities(client, defs).Result.Created() {
+			declarePlatformApp(client)
+		}
 		rn.once(context.Background())
 		return
 	}

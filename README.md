@@ -153,9 +153,9 @@ The Scopes, all at the `OBP_ENTITY_SPACE_ID` bank id (`SYS` for system level):
 
 | Scope | Used by |
 |---|---|
-| `CanGetDynamicEntityDefinitions` | `setup-entity` |
-| `CanCreateDynamicEntityDefinition` | `setup-entity` |
-| `CanUpdateDynamicEntityDefinition` | `setup-entity` |
+| `CanGetDynamicEntityDefinitions` | `setup-entity`, `cacher` (on start) |
+| `CanCreateDynamicEntityDefinition` | `setup-entity`, `cacher` (on start) |
+| `CanUpdateDynamicEntityDefinition` | `setup-entity`, `cacher` (on start) |
 | `CanGetDynamicEntityRecord_<entity>` | `cacher`, `delete-records` |
 | `CanCreateDynamicEntityRecord_<entity>` | `cacher` |
 | `CanUpdateDynamicEntityRecord_<entity>` | `cacher` |
@@ -167,8 +167,9 @@ OBP refuses a whole declaration that names a Role that does not exist, and a
 record Role only exists once its entity does. So the tools declare record Roles
 only for the entities that already exist, and the definition Roles alone until
 `CanGetDynamicEntityDefinitions` is granted. On a fresh install that takes two
-rounds: grant the definition Scopes, run `make setup-entity` again (it creates
-the entities, then declares their record Roles), and grant those.
+rounds: grant the definition Scopes, then run `make setup-entity` again or just
+let the cacher in serve mode retry on its next run (either creates the entities,
+then declares their record Roles), and grant those.
 
 Every definition in `entities/` sets `"auth_mode": "UserOrApplication"`. OBP's
 default, `UserOnly`, would refuse the app's token on the record endpoints; with
@@ -216,9 +217,20 @@ Note that OBP refuses a structural change to a dynamic entity that already holds
 data. If `setup-entity` reports `OBP-09023` for an entity, its records must be
 deleted before its schema can be migrated.
 
-### One-time: create/update the `*_on_chain` entities
+### Creating and updating the `*_on_chain` entities
 
-Uses the v7.0.0 management API in the `OBP_ENTITY_SPACE_ID` space, and needs the
+The cacher does this itself on start, like a migration: before mirroring it
+creates every entity in `entities/` that is missing in OBP and updates every one
+whose definition (schema, `has_public_access`, `auth_mode`) differs from what
+OBP holds. Unchanged entities are left alone, and nothing is ever deleted. The
+definitions are built into the binary, so a new version brings its own schema
+with it. A definition that cannot be applied is logged and, in serve mode,
+shown on the status page and `/health` (`entity_setup`) and retried before each
+run; the mirrors of the entities that do exist still run. Set
+`AUTO_SETUP_ENTITIES=false` where an administrator manages the definitions.
+
+`setup-entity` does the same on its own, without mirroring. It
+uses the v7.0.0 management API in the `OBP_ENTITY_SPACE_ID` space, and needs the
 definition Scopes at that bank id on the app's Consumer. Idempotent — an entity that already exists is updated in place
 (PUT), so the previously-deployed `parcel_on_chain` (old CarbonProjectNFT shape)
 is migrated to the new schema.
@@ -230,7 +242,8 @@ chain data and `chain_sync_status` can be read without a login, and
 request body.
 
 ```bash
-make setup-entity        # go run ./cmd/setup-entity
+make setup-entity        # go run ./cmd/setup-entity (built-in definitions)
+go run ./cmd/setup-entity -dir entities   # or read them from a directory
 ```
 
 When it is done, `setup-entity` declares the record Scopes of the entities it has
@@ -326,14 +339,15 @@ scripts/sync-from-ogcr-chain.sh     # or scripts/sync-from-local-anvil-chain.sh
 ## Layout
 
 ```
-entities/*.json               OBP dynamic-entity definitions (for setup)
+entities/*.json               OBP dynamic-entity definitions, built into the binaries
 config/                       env/.env loading (contract addresses)
 internal/contract/            abigen bindings for the five contracts
 internal/obp/                 Platform App auth + dynamic-entity read/write + management
 internal/eth/                 chain reader (tokens + balances → OnChain* structs)
 internal/cache/               upsert chain data into the *_on_chain entities
 cmd/cacher/                   entry point: chain → *_on_chain
-cmd/setup-entity/             one-time entity create/update
+internal/setup/               create missing / update changed entity definitions
+cmd/setup-entity/             entity create/update without mirroring
 cmd/delete-records/           empty one *_on_chain entity (the cacher refills it)
 scripts/                      shell wrappers: delete, set up, sync (see Scripts)
 ```

@@ -300,22 +300,44 @@ func (c *Client) Space() string {
 // dynamic entity defined in the client's space. The id is needed to update
 // (PUT) an entity; a missing name means it must be created (POST).
 func (c *Client) DynamicEntityIDs() (map[string]string, error) {
+	live, err := c.DynamicEntities()
+	if err != nil {
+		return nil, err
+	}
+	ids := make(map[string]string, len(live))
+	for name, e := range live {
+		ids[name] = e.DynamicEntityID
+	}
+	return ids, nil
+}
+
+// LiveEntity is a dynamic entity definition as OBP holds it.
+type LiveEntity struct {
+	DynamicEntityID   string         `json:"dynamic_entity_id"`
+	EntityName        string         `json:"entity_name"`
+	HasPersonalEntity bool           `json:"has_personal_entity"`
+	HasPublicAccess   bool           `json:"has_public_access"`
+	AuthMode          string         `json:"auth_mode"`
+	Schema            map[string]any `json:"schema"`
+	RecordCount       int64          `json:"record_count"`
+}
+
+// DynamicEntities returns every dynamic entity defined in the client's space,
+// by name, with its definition, so a caller can tell whether it is up to date.
+func (c *Client) DynamicEntities() (map[string]LiveEntity, error) {
 	var raw struct {
-		DynamicEntities []struct {
-			DynamicEntityID string `json:"dynamic_entity_id"`
-			EntityName      string `json:"entity_name"`
-		} `json:"dynamic_entities"`
+		DynamicEntities []LiveEntity `json:"dynamic_entities"`
 	}
 	if err := c.do("GET", c.managementURL(), nil, &raw); err != nil {
 		return nil, err
 	}
-	ids := make(map[string]string)
+	live := make(map[string]LiveEntity)
 	for _, e := range raw.DynamicEntities {
 		if e.DynamicEntityID != "" && e.EntityName != "" {
-			ids[e.EntityName] = e.DynamicEntityID
+			live[e.EntityName] = e
 		}
 	}
-	return ids, nil
+	return live, nil
 }
 
 // EntityDefinition is a v7.0.0 dynamic entity definition request body.

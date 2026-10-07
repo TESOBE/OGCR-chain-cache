@@ -52,6 +52,12 @@ type Config struct {
 	// tool. It is recorded in chain_sync_status so a consumer can decide what
 	// counts as stale without hardcoding the schedule. 0 means "run by hand".
 	IntervalSeconds int
+
+	// AutoSetupEntities makes the cacher create missing entity definitions and
+	// update changed ones before it mirrors, like a migration
+	// (AUTO_SETUP_ENTITIES, default true). Turn it off where an administrator
+	// manages the definitions.
+	AutoSetupEntities bool
 }
 
 // HasCreditBatch reports whether the CarbonCreditBatchNFT address is configured.
@@ -101,6 +107,15 @@ func Load() (*Config, error) {
 		interval = n
 	}
 
+	autoSetup := true
+	if s := os.Getenv("AUTO_SETUP_ENTITIES"); s != "" {
+		b, err := strconv.ParseBool(s)
+		if err != nil {
+			return nil, fmt.Errorf("invalid AUTO_SETUP_ENTITIES: %q", s)
+		}
+		autoSetup = b
+	}
+
 	space, ok := os.LookupEnv("OBP_ENTITY_SPACE_ID")
 	if !ok {
 		space = "ogcr"
@@ -120,5 +135,6 @@ func Load() (*Config, error) {
 		CreditContractAddress:        os.Getenv("CREDIT_CONTRACT_ADDRESS"),
 		FromBlock:                    fromBlock,
 		IntervalSeconds:              interval,
+		AutoSetupEntities:            autoSetup,
 	}, nil
 }

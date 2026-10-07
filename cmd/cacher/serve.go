@@ -49,6 +49,9 @@ type server struct {
 	app          *obp.PlatformApp
 	appErr       string
 	appCheckedAt time.Time
+	// entities is the last entity definition setup; nil until the first one,
+	// and always nil when AUTO_SETUP_ENTITIES is off.
+	entities *entitySetup
 }
 
 func serve(ctx context.Context, rn *runner, addr string) error {
@@ -94,6 +97,7 @@ func serve(ctx context.Context, rn *runner, addr string) error {
 func (s *server) loop(ctx context.Context) {
 	for {
 		s.declareIfDue()
+		s.setupEntitiesIfDue()
 
 		s.mu.Lock()
 		s.running, s.runStarted = true, time.Now()
@@ -140,6 +144,29 @@ func (s *server) declareIfDue() {
 	s.app, s.appErr = app, ""
 }
 
+// setupEntitiesIfDue applies the entity definitions until every one has been
+// applied: a failure (often a definition Scope not granted yet) is retried
+// before the next run. Creating an entity adds record Roles, so the Platform
+// App's Scopes are then declared again straight away.
+func (s *server) setupEntitiesIfDue() {
+	s.mu.Lock()
+	due := s.rn.defs != nil && !s.entities.done()
+	s.mu.Unlock()
+	if !due {
+		return
+	}
+	es := ensureEntities(s.rn.client, s.rn.defs)
+	s.mu.Lock()
+	s.entities = es
+	if es.Result.Created() {
+		s.appCheckedAt = time.Time{} // forces declareIfDue
+	}
+	s.mu.Unlock()
+	if es.Result.Created() {
+		s.declareIfDue()
+	}
+}
+
 func (s *server) handleRun(w http.ResponseWriter, r *http.Request) {
 	select {
 	case s.runNow <- struct{}{}:
@@ -162,7 +189,12 @@ type health struct {
 	ErrorCount       int        `json:"error_count"`
 	MissingScopes    []string   `json:"missing_scopes"`
 	PlatformApp      string     `json:"platform_app_error,omitempty"`
-	NextRunAt        *time.Time `json:"next_run_at,omitempty"`
+	// EntitySetup is "off", "pending", "ok" or "failed"; EntitySetupFailed
+	// names the entities whose definitions could not be applied.
+	EntitySetup       string     `json:"entity_setup"`
+	EntitySetupFailed []string   `json:"entity_setup_failed"`
+	EntitySetupError  string     `json:"entity_setup_error,omitempty"`
+	NextRunAt         *time.Time `json:"next_run_at,omitempty"`
 }
 
 func (s *server) handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -180,6 +212,20 @@ func (s *server) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	}
 	if s.app != nil {
 		h.MissingScopes = obp.ScopeNames(s.app.Missing())
+	}
+	h.EntitySetup, h.EntitySetupFailed = "off", []string{}
+	if s.rn.defs != nil {
+		switch {
+		case s.entities == nil:
+			h.EntitySetup = "pending"
+		case s.entities.done():
+			h.EntitySetup = "ok"
+		default:
+			h.EntitySetup, h.EntitySetupError = "failed", s.entities.Err
+			if failed := s.entities.Result.Failed(); failed != nil {
+				h.EntitySetupFailed = failed
+			}
+		}
 	}
 	if !s.running && !s.nextRun.IsZero() {
 		next := s.nextRun
@@ -211,6 +257,9 @@ type statusView struct {
 	App                 *obp.PlatformApp
 	AppErr              string
 	AppMissing          int
+	EntitySetupOff      bool
+	EntitySetup         *entitySetup
+	EntitySetupAgo      string
 	History             []historyRow
 	Now                 string
 	Chain               *chainView
@@ -287,6 +336,10 @@ func (s *server) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	}
 	if s.app != nil {
 		v.AppMissing = len(s.app.Missing())
+	}
+	v.EntitySetupOff, v.EntitySetup = s.rn.defs == nil, s.entities
+	if s.entities != nil {
+		v.EntitySetupAgo = roundDuration(time.Since(s.entities.At))
 	}
 	if len(s.history) > 0 {
 		last := s.history[0]

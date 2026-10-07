@@ -10,9 +10,11 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/TESOBE/OGCR-chain-cache/internal/eth"
 	"github.com/TESOBE/OGCR-chain-cache/internal/obp"
 )
 
@@ -149,22 +151,32 @@ func (s *server) handleRun(w http.ResponseWriter, r *http.Request) {
 // health is the /health body: enough for a script or the dev-env page to tell
 // whether the mirror is working, without parsing the page.
 type health struct {
-	Status        string     `json:"status"` // starting, ok, partial or no_chain
-	Running       bool       `json:"running"`
-	LastRunAt     *time.Time `json:"last_run_at,omitempty"`
-	HeadBlock     uint64     `json:"head_block,omitempty"`
-	ErrorCount    int        `json:"error_count"`
-	MissingScopes []string   `json:"missing_scopes"`
-	PlatformApp   string     `json:"platform_app_error,omitempty"`
-	NextRunAt     *time.Time `json:"next_run_at,omitempty"`
+	Status        string `json:"status"` // starting, ok, partial or no_chain
+	ChainID       uint64 `json:"chain_id"`
+	ClientVersion string `json:"client_version,omitempty"`
+	// MissingContracts are configured contracts with no code on this chain.
+	MissingContracts []string   `json:"missing_contracts"`
+	Running          bool       `json:"running"`
+	LastRunAt        *time.Time `json:"last_run_at,omitempty"`
+	HeadBlock        uint64     `json:"head_block,omitempty"`
+	ErrorCount       int        `json:"error_count"`
+	MissingScopes    []string   `json:"missing_scopes"`
+	PlatformApp      string     `json:"platform_app_error,omitempty"`
+	NextRunAt        *time.Time `json:"next_run_at,omitempty"`
 }
 
 func (s *server) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	s.mu.Lock()
-	h := health{Status: "starting", Running: s.running, MissingScopes: []string{}, PlatformApp: s.appErr}
+	h := health{Status: "starting", ChainID: s.rn.chainID, Running: s.running, MissingScopes: []string{}, MissingContracts: []string{}, PlatformApp: s.appErr}
 	if len(s.history) > 0 {
 		last := s.history[0]
 		h.Status, h.LastRunAt, h.HeadBlock, h.ErrorCount = last.RunStatus, &last.Finished, last.HeadBlock, len(last.Errors)
+		h.ClientVersion = last.Chain.ClientVersion
+		for _, c := range last.Chain.Contracts {
+			if c.Configured && c.Err == "" && c.CodeBytes == 0 {
+				h.MissingContracts = append(h.MissingContracts, c.Name)
+			}
+		}
 	}
 	if s.app != nil {
 		h.MissingScopes = obp.ScopeNames(s.app.Missing())
@@ -201,6 +213,44 @@ type statusView struct {
 	AppMissing          int
 	History             []historyRow
 	Now                 string
+	Chain               *chainView
+}
+
+// chainView is the Chain section: what node answers and what is deployed on it.
+type chainView struct {
+	Client, ClientVersion string
+	ChainID               uint64
+	RPCURL                string
+	HeadBlock             uint64
+	HeadTime, HeadAge     string
+	Err                   string
+	Contracts             []eth.ContractInfo
+	MissingContracts      int
+}
+
+func newChainView(info eth.ChainInfo, rpcURL string) *chainView {
+	v := &chainView{
+		Client:        "unknown",
+		ClientVersion: info.ClientVersion,
+		ChainID:       info.ChainID,
+		RPCURL:        rpcURL,
+		HeadBlock:     info.HeadBlock,
+		Err:           info.Err,
+		Contracts:     info.Contracts,
+	}
+	if name, _, _ := strings.Cut(info.ClientVersion, "/"); name != "" {
+		v.Client = name
+	}
+	if !info.HeadTime.IsZero() {
+		v.HeadTime = info.HeadTime.Format("2006-01-02 15:04:05")
+		v.HeadAge = roundDuration(time.Since(info.HeadTime))
+	}
+	for _, c := range info.Contracts {
+		if c.Configured && c.Err == "" && c.CodeBytes == 0 {
+			v.MissingContracts++
+		}
+	}
+	return v
 }
 
 type historyRow struct {
@@ -245,6 +295,7 @@ func (s *server) handleStatus(w http.ResponseWriter, _ *http.Request) {
 		v.LastRunTook = roundDuration(last.Finished.Sub(last.Started))
 		v.HeadBlock, v.SyncRecorded = last.HeadBlock, last.SyncRecorded
 		v.Mirrors, v.Errors = last.Mirrors, last.Errors
+		v.Chain = newChainView(last.Chain, v.RPCURL)
 	}
 	for _, r := range s.history {
 		row := historyRow{At: r.Finished.Format("15:04:05"), Status: r.RunStatus, Took: roundDuration(r.Finished.Sub(r.Started)), HeadBlock: r.HeadBlock, Errors: len(r.Errors)}
@@ -258,6 +309,12 @@ func (s *server) handleStatus(w http.ResponseWriter, _ *http.Request) {
 	v.StatusLabel = statusLabels[v.Status]
 	if v.StatusLabel == "" {
 		v.StatusLabel = v.Status
+	}
+	// A run against addresses with no code finds nothing and so reports ok;
+	// the headline should not.
+	if v.Status == "ok" && v.Chain != nil && v.Chain.MissingContracts > 0 {
+		v.Status = "partial"
+		v.StatusLabel = fmt.Sprintf("Ran, but %d configured contract(s) are not on chain %d", v.Chain.MissingContracts, v.Chain.ChainID)
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := statusTemplate.Execute(w, v); err != nil {

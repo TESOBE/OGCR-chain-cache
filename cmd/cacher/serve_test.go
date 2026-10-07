@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TESOBE/OGCR-chain-cache/internal/eth"
 	"github.com/TESOBE/OGCR-chain-cache/internal/obp"
 )
 
@@ -127,5 +128,35 @@ func TestRoundDuration(t *testing.T) {
 		if got := roundDuration(d); got != want {
 			t.Errorf("roundDuration(%v) = %q, want %q", d, got, want)
 		}
+	}
+}
+
+func TestChainSectionShowsNodeAndMissingContracts(t *testing.T) {
+	s := testServer()
+	s.addRun("ok")
+	s.history[0].Chain = eth.ChainInfo{
+		ClientVersion: "besu/v25.8.0/linux-x86_64/openjdk-java-21",
+		ChainID:       20253,
+		HeadBlock:     3750,
+		HeadTime:      time.Now().Add(-90 * time.Second),
+		Contracts: []eth.ContractInfo{
+			{Name: "ParcelNFT", Address: "0x62227531b82259561CC9ad4413188F08E536598a", Configured: true},
+			{Name: "ActivityNFT", Address: "0x5034F49b27353CeDc562b49eA91C7438Ea351d36", Configured: true, CodeBytes: 9000},
+			{Name: "CarbonCredit"},
+		},
+	}
+	body := get(t, s, s.handleStatus, "/").Body.String()
+	for _, want := range []string{"<b>besu</b>", "20253", "1m30s ago", "✗ no code at this address", "✓ deployed", "not configured", "1 configured address holds no contract on chain 20253", "Ran, but 1 configured contract(s) are not on chain 20253"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("page is missing %q", want)
+		}
+	}
+
+	var h health
+	if err := json.Unmarshal(get(t, s, s.handleHealth, "/health").Body.Bytes(), &h); err != nil {
+		t.Fatal(err)
+	}
+	if h.ClientVersion == "" || len(h.MissingContracts) != 1 || h.MissingContracts[0] != "ParcelNFT" {
+		t.Errorf("health = %+v, want the client version and ParcelNFT missing", h)
 	}
 }

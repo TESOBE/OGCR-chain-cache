@@ -234,6 +234,67 @@ func NewReader(rpcURL string, addrs Addresses) (*Reader, error) {
 
 func (r *Reader) ChainID() uint64 { return r.chainID }
 
+// ChainInfo describes the chain and the configured contracts, for the status
+// page: which node software answers, how far the chain has got, and whether
+// each contract address actually holds code on this chain.
+type ChainInfo struct {
+	ClientVersion string // web3_clientVersion, e.g. besu/v25.8.0/... or anvil/v1.8.1
+	ChainID       uint64
+	HeadBlock     uint64
+	HeadTime      time.Time
+	Contracts     []ContractInfo
+	Err           string // why the node could not be read, if it could not
+}
+
+// ContractInfo is one configured contract. CodeBytes is 0 when nothing is
+// deployed at the address on this chain.
+type ContractInfo struct {
+	Name       string
+	Address    string
+	Configured bool
+	CodeBytes  int
+	Err        string
+}
+
+// Info reads ChainInfo. It never fails: what could not be read is reported in
+// the Err fields.
+func (r *Reader) Info(ctx context.Context) ChainInfo {
+	info := ChainInfo{ChainID: r.chainID}
+	if err := r.client.Client().CallContext(ctx, &info.ClientVersion, "web3_clientVersion"); err != nil {
+		info.ClientVersion = ""
+	}
+	head, err := r.client.HeaderByNumber(ctx, nil)
+	if err != nil {
+		info.Err = fmt.Sprintf("read head block: %v", err)
+		return info
+	}
+	info.HeadBlock, info.HeadTime = head.Number.Uint64(), time.Unix(int64(head.Time), 0)
+
+	for _, c := range []struct {
+		name       string
+		addr       common.Address
+		configured bool
+	}{
+		{"ParcelNFT", r.parcelAddr, true},
+		{"ActivityNFT", r.activityAddr, true},
+		{"CertificationNFT", r.certAddr, true},
+		{"CarbonCreditBatchNFT", r.creditBatchAddr, r.creditBatch != nil},
+		{"CarbonCredit", r.creditAddr, r.credit != nil},
+	} {
+		ci := ContractInfo{Name: c.name, Configured: c.configured}
+		if c.configured {
+			ci.Address = c.addr.Hex()
+			code, err := r.client.CodeAt(ctx, c.addr, nil)
+			if err != nil {
+				ci.Err = err.Error()
+			}
+			ci.CodeBytes = len(code)
+		}
+		info.Contracts = append(info.Contracts, ci)
+	}
+	return info
+}
+
 // HasCreditBatch reports whether a CarbonCreditBatchNFT address was configured.
 func (r *Reader) HasCreditBatch() bool { return r.creditBatch != nil }
 

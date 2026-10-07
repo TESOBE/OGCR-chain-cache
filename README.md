@@ -246,7 +246,11 @@ make serve               # go run ./cmd/cacher -serve 127.0.0.1:8766
 make serve-local         # the same against the local chain and OBP
 ```
 
-- `/` shows the last run (status, head block, records and errors per mirror,
+- `/` shows the chain it is connected to (node software such as `besu` or
+  `anvil`, chain id, head block and how long ago it was produced) and, for each
+  configured contract, whether its address holds code on that chain, so a
+  deployment to a different chain shows straight away.
+- It also shows the last run (status, head block, records and errors per mirror,
   whether `chain_sync_status` was written), the Platform App's declared Scopes
   and which are held, the last run's errors, and recent runs. It refreshes
   every 5 seconds and has a **Run now** button.

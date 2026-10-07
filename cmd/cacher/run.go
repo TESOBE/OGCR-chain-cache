@@ -28,6 +28,7 @@ type Report struct {
 	Mirrors           []MirrorLine
 	Errors            []string
 	SyncRecorded      bool
+	Chain             eth.ChainInfo
 }
 
 // MirrorLine is one mirror's part of a Report.
@@ -55,6 +56,12 @@ func (rn *runner) once(ctx context.Context) *Report {
 	r := &run{ctx: ctx, reader: rn.reader, client: rn.client, fromBlock: rn.fromBlock}
 	rep := &Report{Started: time.Now(), ChainID: rn.reader.ChainID()}
 	slog.Info("cacher run start", "chain_id", rn.reader.ChainID(), "from_block", rn.fromBlock)
+	rep.Chain = rn.reader.Info(ctx)
+	for _, c := range rep.Chain.Contracts {
+		if c.Configured && c.Err == "" && c.CodeBytes == 0 {
+			slog.Warn("no contract code at the configured address on this chain", "contract", c.Name, "address", c.Address, "chain_id", rep.ChainID)
+		}
+	}
 
 	results := map[string]mirrorResult{}
 	if rn.want["parcel"] {

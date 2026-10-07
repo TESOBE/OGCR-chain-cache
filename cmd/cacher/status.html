@@ -65,6 +65,7 @@
   .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px 16px; margin-top: 12px; }
   .facts div { font-size: 13px; color: var(--muted); }
   .facts b { display: block; color: var(--text); font-weight: 500; font-size: 15px; overflow-wrap: anywhere; }
+  .facts b.mono { font-size: 13px; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 4px 8px 6px 0; }
   td { padding: 6px 8px 6px 0; border-top: 1px solid var(--border); vertical-align: top; }
@@ -108,9 +109,43 @@
       <div>Head block<b>{{if .HeadBlock}}{{.HeadBlock}}{{else}}–{{end}}</b></div>
       <div>chain_sync_status<b>{{if .SyncRecorded}}written{{else if .LastRunAgo}}<span class="bad">not written</span>{{else}}–{{end}}</b></div>
       <div>OBP<b class="mono">{{.OBPURL}}</b></div>
-      <div>Chain RPC<b class="mono">{{.RPCURL}}</b></div>
     </div>
   </section>
+
+  {{with .Chain}}
+  <section>
+    <h2>Chain</h2>
+    <div class="facts" style="margin:0">
+      <div>Node<b>{{.Client}}</b></div>
+      <div>Chain ID<b>{{.ChainID}}</b></div>
+      <div>RPC<b class="mono">{{.RPCURL}}</b></div>
+      <div>Head block<b>{{if .HeadTime}}{{.HeadBlock}}{{else}}–{{end}}</b></div>
+      <div>Head block produced<b>{{if .HeadAge}}{{.HeadAge}} ago{{else}}–{{end}}</b></div>
+      <div>Head block time<b>{{if .HeadTime}}{{.HeadTime}}{{else}}–{{end}}</b></div>
+    </div>
+    {{if .ClientVersion}}<p class="hint mono" style="overflow-wrap:anywhere">{{.ClientVersion}}</p>{{end}}
+    {{if .Err}}<p class="bad mono" style="overflow-wrap:anywhere">{{.Err}}</p>{{end}}
+    {{if .Contracts}}
+    <table style="margin-top:12px">
+      <tr><th>Contract</th><th>Address</th><th>On this chain</th></tr>
+      {{range .Contracts}}
+      <tr>
+        <td>{{.Name}}</td>
+        {{if .Configured}}
+        <td class="mono" style="overflow-wrap:anywhere">{{.Address}}</td>
+        <td>{{if .Err}}<span class="bad" title="{{.Err}}">could not check</span>{{else if .CodeBytes}}<span class="held">✓ deployed</span> <span class="muted">({{.CodeBytes}} bytes)</span>{{else}}<span class="missing">✗ no code at this address</span>{{end}}</td>
+        {{else}}
+        <td class="muted" colspan="2">not configured</td>
+        {{end}}
+      </tr>
+      {{end}}
+    </table>
+    {{if .MissingContracts}}
+    <p class="hint">{{.MissingContracts}} configured address{{if gt .MissingContracts 1}}es hold{{else}} holds{{end}} no contract on chain {{.ChainID}}: the contracts were deployed to a different chain, or not yet. Nothing can be mirrored from {{if gt .MissingContracts 1}}them{{else}}it{{end}}.</p>
+    {{end}}
+    {{end}}
+  </section>
+  {{end}}
 
   {{if .Mirrors}}
   <section>

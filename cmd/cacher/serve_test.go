@@ -91,7 +91,7 @@ func TestStatusPageRenders(t *testing.T) {
 	s.addRun("partial", "upsert parcel failed parcel_id=<script>")
 	s.appErr = "PUT .../platform-app returned 404: OBP-xxxx This Consumer's CONSUMER_ID is c1"
 	body := get(t, s, s.handleStatus, "/").Body.String()
-	for _, want := range []string{"Partial: some records failed", "<code>parcel</code>", "skipped", "CONSUMER_ID is c1", "Recent runs", "https://rpc.example"} {
+	for _, want := range []string{"Partial: some records failed", "<code>parcel</code>", "not run", "CONSUMER_ID is c1", "Recent runs", "https://rpc.example"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page is missing %q", want)
 		}
@@ -158,5 +158,20 @@ func TestChainSectionShowsNodeAndMissingContracts(t *testing.T) {
 	}
 	if h.ClientVersion == "" || len(h.MissingContracts) != 1 || h.MissingContracts[0] != "ParcelNFT" {
 		t.Errorf("health = %+v, want the client version and ParcelNFT missing", h)
+	}
+}
+
+func TestStatusPageListsSkippedTokens(t *testing.T) {
+	s := testServer()
+	s.addRun("ok")
+	s.history[0].Skipped = []string{"activity not in this OBP, skipped activity_id=example_activity_01 token_id=1"}
+	body := get(t, s, s.handleStatus, "/").Body.String()
+	for _, want := range []string{"Skipped in the last run (1)", "activity_id=example_activity_01"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("page is missing %q", want)
+		}
+	}
+	if strings.Contains(body, "Errors in the last run") {
+		t.Error("a skipped token is not an error")
 	}
 }

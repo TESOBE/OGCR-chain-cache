@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="refresh" content="5">
 <title>OGCR Chain Cache</title>
 <style>
   :root {
@@ -76,6 +75,10 @@
   .muted { color: var(--muted); }
   .bad { color: var(--bad); }
   ul.errors { margin: 0; padding: 0; list-style: none; }
+  /* user-select: none keeps the icon out of a hand-made selection of the error. */
+  button.copy { font: inherit; font-size: 12px; padding: 1px 6px; margin-right: 4px; cursor: pointer; user-select: none;
+    border: 1px solid var(--border); border-radius: 4px; background: var(--card); color: var(--text); vertical-align: baseline; }
+  button.copy.done { color: var(--ok, #1a7f37); }
   ul.errors li { padding: 6px 0; border-top: 1px solid var(--border); overflow-wrap: anywhere; }
   ul.errors li:first-child { border-top: none; }
   button {
@@ -92,7 +95,7 @@
   <header>
     <div>
       <h1>🔗 OGCR Chain Cache</h1>
-      <div class="sub">chain {{.ChainID}} ➜ OBP {{.Space}} · refreshes every 5s · {{.Now}}</div>
+      <div class="sub">chain {{.ChainID}} ➜ OBP {{.Space}} · refreshes every 10s · {{.Now}}</div>
     </div>
     <form method="post" action="/run">
       <button type="submit" {{if .Running}}disabled{{end}}>{{if .Running}}Running…{{else}}Run now{{end}}</button>
@@ -133,7 +136,7 @@
         <td>{{.Name}}</td>
         {{if .Configured}}
         <td class="mono" style="overflow-wrap:anywhere">{{.Address}}</td>
-        <td>{{if .Err}}<span class="bad" title="{{.Err}}">could not check</span>{{else if .CodeBytes}}<span class="held">✓ deployed</span> <span class="muted">({{.CodeBytes}} bytes)</span>{{else}}<span class="missing">✗ no code at this address</span>{{end}}</td>
+        <td>{{if .Err}}<span class="bad">could not check:</span> <span class="mono" style="overflow-wrap:anywhere">{{.Err}}</span>{{else if .CodeBytes}}<span class="held">✓ deployed</span> <span class="muted">({{.CodeBytes}} bytes)</span>{{else}}<span class="missing">✗ no code at this address</span>{{end}}</td>
         {{else}}
         <td class="muted" colspan="2">not configured</td>
         {{end}}
@@ -151,15 +154,16 @@
   <section>
     <h2>Last run</h2>
     <table>
-      <tr><th>Mirror</th><th class="num">Records written</th><th class="num">Errors</th></tr>
+      <tr><th>Mirror</th><th class="num">Records written</th><th class="num">Skipped</th><th class="num">Errors</th></tr>
       {{range .Mirrors}}
       <tr>
         <td><code>{{.Name}}</code></td>
         {{if .Ran}}
         <td class="num">{{.Count}}</td>
+        <td class="num">{{if .Skipped}}<span class="muted">{{.Skipped}}</span>{{else}}0{{end}}</td>
         <td class="num">{{if .Errors}}<span class="bad">{{.Errors}}</span>{{else}}0{{end}}</td>
         {{else}}
-        <td class="num muted" colspan="2">skipped</td>
+        <td class="num muted" colspan="3">not run</td>
         {{end}}
       </tr>
       {{end}}
@@ -183,8 +187,8 @@
       <table>
         <tr><th>Scope</th><th>Bank</th><th>Held</th></tr>
         {{range .App.RequiredScopes}}
-        <tr title="{{.NeededFor}}">
-          <td><code>{{.RoleName}}</code>{{if .Optional}} <span class="muted">(optional)</span>{{end}}</td>
+        <tr>
+          <td><code>{{.RoleName}}</code>{{if .Optional}} <span class="muted">(optional)</span>{{end}}{{if .NeededFor}}<div class="muted" style="font-size:12px">{{.NeededFor}}</div>{{end}}</td>
           <td><code>{{.BankID}}</code></td>
           <td>{{if .Held}}<span class="held">✓ held</span>{{else if .Optional}}<span class="muted">not held</span>{{else}}<span class="missing">✗ missing</span>{{end}}</td>
         </tr>
@@ -227,9 +231,19 @@
 
   {{if .Errors}}
   <section>
-    <h2>Errors in the last run ({{len .Errors}})</h2>
+    <h2>Errors in the last run ({{len .Errors}}) <button type="button" class="copy" data-copy-all title="Copy all errors">⧉ copy all</button></h2>
     <ul class="errors">
-      {{range .Errors}}<li class="mono">{{.}}</li>{{end}}
+      {{range .Errors}}<li><button type="button" class="copy" title="Copy this error">⧉</button> <span class="mono err-text">{{.}}</span></li>{{end}}
+    </ul>
+  </section>
+  {{end}}
+
+  {{if .Skipped}}
+  <section>
+    <h2>Skipped in the last run ({{len .Skipped}})</h2>
+    <p class="hint">Tokens that cannot be mirrored into this OBP, e.g. an activity token whose activity is not in this space. They do not make the run partial.</p>
+    <ul class="errors">
+      {{range .Skipped}}<li><button type="button" class="copy" title="Copy this line">⧉</button> <span class="mono err-text">{{.}}</span></li>{{end}}
     </ul>
   </section>
   {{end}}
@@ -253,5 +267,33 @@
   </section>
   {{end}}
 </div>
+<script>
+  // Reload every 10s, but not while text is selected or the tab is hidden, so
+  // a selection survives long enough to copy.
+  function copyText(text, btn) {
+    function done() { var t = btn.textContent; btn.textContent = '✓ copied'; btn.classList.add('done');
+      setTimeout(function () { btn.textContent = t; btn.classList.remove('done'); }, 1500); }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done);
+    } else {
+      // Plain http on a non-local address has no clipboard API.
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta); done();
+    }
+  }
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('button.copy');
+    if (!btn) return;
+    var text = btn.hasAttribute('data-copy-all')
+      ? Array.prototype.map.call(btn.closest('section').querySelectorAll('.err-text'), function (el) { return el.textContent; }).join('\n')
+      : btn.parentNode.querySelector('.err-text').textContent;
+    copyText(text, btn);
+  });
+  setInterval(function () {
+    var sel = window.getSelection && window.getSelection().toString();
+    if (!sel && !document.hidden) location.reload();
+  }, 10000);
+</script>
 </body>
 </html>

@@ -8,6 +8,7 @@ package obp
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -198,6 +199,15 @@ type APIError struct {
 
 func (e *APIError) Error() string {
 	return fmt.Sprintf("%s %s returned %d: %s", e.Method, e.URL, e.Status, e.Body)
+}
+
+// IsReferenceNotFound reports whether err is OBP refusing a record because a
+// `reference:` field names a record that does not exist in this space
+// (OBP-09007 "... not found by the id value ...").
+func IsReferenceNotFound(err error) bool {
+	var apiErr *APIError
+	return errors.As(err, &apiErr) && apiErr.Status == http.StatusBadRequest &&
+		strings.Contains(apiErr.Body, "OBP-09007") && strings.Contains(apiErr.Body, "not found by the id value")
 }
 
 // space is the BANK_ID path segment for the client's space: the bank id, or the

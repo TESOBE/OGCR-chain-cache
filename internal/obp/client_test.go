@@ -2,6 +2,7 @@ package obp
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -154,5 +155,19 @@ func TestRequiredScopes(t *testing.T) {
 	}
 	if got := scopes[4].RoleName; got != "CanCreateDynamicEntityRecord_parcel_on_chain" {
 		t.Errorf("scopes[4] = %s", got)
+	}
+}
+
+func TestIsReferenceNotFound(t *testing.T) {
+	missing := &APIError{Status: 400, Body: `{"code":400,"message":"OBP-09007: DynamicEntity data validation failure. details: activity not found by the id value 'example_activity_01', propertyName is 'activity_id'"}`}
+	if !IsReferenceNotFound(fmt.Errorf("upsert: %w", missing)) {
+		t.Error("a reference to a missing record should be recognised, also when wrapped")
+	}
+	other := &APIError{Status: 400, Body: `{"code":400,"message":"OBP-09007: DynamicEntity data validation failure. details: token_id is not an integer"}`}
+	if IsReferenceNotFound(other) {
+		t.Error("another validation failure is a real error")
+	}
+	if IsReferenceNotFound(&APIError{Status: 403, Body: "not found by the id value OBP-09007"}) || IsReferenceNotFound(nil) {
+		t.Error("only a 400 counts")
 	}
 }

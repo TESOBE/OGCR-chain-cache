@@ -269,7 +269,7 @@ make serve-local         # the same against the local chain and OBP
 - It also shows the last run (status, head block, records and errors per mirror,
   whether `chain_sync_status` was written), the Platform App's declared Scopes
   and which are held, the last run's errors, and recent runs. It refreshes
-  every 5 seconds and has a **Run now** button.
+  every 10 seconds and has a **Run now** button.
 - `/health` returns the same status as JSON, for scripts and the dev-env page.
 
 The page shows only this process's own state, so it needs no OBP login. Bind it

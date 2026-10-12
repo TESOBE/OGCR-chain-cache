@@ -254,6 +254,7 @@ type statusView struct {
 	SyncRecorded        bool
 	Mirrors             []MirrorLine
 	Errors              []string
+	Skipped             []string
 	App                 *obp.PlatformApp
 	AppErr              string
 	AppMissing          int
@@ -347,7 +348,7 @@ func (s *server) handleStatus(w http.ResponseWriter, _ *http.Request) {
 		v.LastRunAgo = roundDuration(time.Since(last.Finished))
 		v.LastRunTook = roundDuration(last.Finished.Sub(last.Started))
 		v.HeadBlock, v.SyncRecorded = last.HeadBlock, last.SyncRecorded
-		v.Mirrors, v.Errors = last.Mirrors, last.Errors
+		v.Mirrors, v.Errors, v.Skipped = last.Mirrors, last.Errors, last.Skipped
 		v.Chain = newChainView(last.Chain, v.RPCURL)
 	}
 	for _, r := range s.history {

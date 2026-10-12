@@ -27,16 +27,18 @@ type Report struct {
 	RunStatus         string
 	Mirrors           []MirrorLine
 	Errors            []string
+	Skipped           []string
 	SyncRecorded      bool
 	Chain             eth.ChainInfo
 }
 
 // MirrorLine is one mirror's part of a Report.
 type MirrorLine struct {
-	Name   string
-	Ran    bool
-	Count  int
-	Errors int
+	Name    string
+	Ran     bool
+	Count   int
+	Skipped int
+	Errors  int
 }
 
 // runner holds what every run needs.
@@ -83,9 +85,9 @@ func (rn *runner) once(ctx context.Context) *Report {
 	rep.HeadBlock, rep.RunStatus, rep.SyncRecorded = r.recordSyncStatus(rn.intervalSeconds, results)
 	for _, name := range mirrorNames {
 		res := results[name]
-		rep.Mirrors = append(rep.Mirrors, MirrorLine{Name: name, Ran: res.ran, Count: res.count, Errors: res.errors})
+		rep.Mirrors = append(rep.Mirrors, MirrorLine{Name: name, Ran: res.ran, Count: res.count, Skipped: res.skipped, Errors: res.errors})
 	}
-	rep.Errors = r.errors
+	rep.Errors, rep.Skipped = r.errors, r.skipped
 	rep.Finished = time.Now()
 	return rep
 }
@@ -94,9 +96,10 @@ func (rn *runner) once(ctx context.Context) *Report {
 // chain_sync_status. `ran` distinguishes a genuine count of zero from a mirror
 // that never executed.
 type mirrorResult struct {
-	count  int
-	errors int
-	ran    bool
+	count   int
+	skipped int
+	errors  int
+	ran     bool
 }
 
 // run is one pass over the chain. It keeps the errors it logs, so the status
@@ -107,6 +110,7 @@ type run struct {
 	client    *obp.Client
 	fromBlock uint64
 	errors    []string
+	skipped   []string
 }
 
 // maxRunErrors caps how many error lines a report keeps; the log has them all.
@@ -123,6 +127,20 @@ func (r *run) fail(msg string, args ...any) {
 		line += fmt.Sprintf(" %v=%v", args[i], args[i+1])
 	}
 	r.errors = append(r.errors, line)
+}
+
+// skip logs a token that cannot be mirrored into this OBP and keeps it, as one
+// line, for the report. Unlike fail it does not make the run partial.
+func (r *run) skip(msg string, args ...any) {
+	slog.Warn(msg, args...)
+	if len(r.skipped) >= maxRunErrors {
+		return
+	}
+	line := msg
+	for i := 0; i+1 < len(args); i += 2 {
+		line += fmt.Sprintf(" %v=%v", args[i], args[i+1])
+	}
+	r.skipped = append(r.skipped, line)
 }
 
 func (r *run) mirrorParcels() mirrorResult {
@@ -158,6 +176,14 @@ func (r *run) mirrorActivities() mirrorResult {
 	slog.Info("activities read", "count", len(activities))
 	for _, a := range activities {
 		msg, err := cache.UpsertActivity(r.client, a)
+		if obp.IsReferenceNotFound(err) {
+			// activity_on_chain.activity_id is a reference:activity, so a token
+			// for an activity this OBP does not hold (such as the chain's
+			// example token) cannot be mirrored here. That is not a fault.
+			r.skip("activity not in this OBP, skipped", "activity_id", a.ActivityID, "token_id", a.TokenID)
+			res.skipped++
+			continue
+		}
 		if err != nil {
 			r.fail("upsert activity failed", "activity_id", a.ActivityID, "err", err)
 			res.errors++

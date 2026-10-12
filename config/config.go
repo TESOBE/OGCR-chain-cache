@@ -58,6 +58,10 @@ type Config struct {
 	// (AUTO_SETUP_ENTITIES, default true). Turn it off where an administrator
 	// manages the definitions.
 	AutoSetupEntities bool
+
+	// ServeAddr is where serve mode (cacher -serve) serves its status page
+	// (SERVE_ADDR, default 127.0.0.1:8766).
+	ServeAddr string
 }
 
 // HasCreditBatch reports whether the CarbonCreditBatchNFT address is configured.
@@ -116,6 +120,11 @@ func Load() (*Config, error) {
 		autoSetup = b
 	}
 
+	serveAddr := os.Getenv("SERVE_ADDR")
+	if serveAddr == "" {
+		serveAddr = "127.0.0.1:8766"
+	}
+
 	space, ok := os.LookupEnv("OBP_ENTITY_SPACE_ID")
 	if !ok {
 		space = "ogcr"
@@ -136,5 +145,6 @@ func Load() (*Config, error) {
 		FromBlock:                    fromBlock,
 		IntervalSeconds:              interval,
 		AutoSetupEntities:            autoSetup,
+		ServeAddr:                    serveAddr,
 	}, nil
 }

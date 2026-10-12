@@ -23,10 +23,8 @@ delete-records: ## delete every record of one *_on_chain entity, keeping its def
 run: ## mirror chain -> OBP (limit types via ARGS="parcel activity certification credit")
 	go run ./cmd/cacher $(ARGS)
 
-SERVE_ADDR ?= 127.0.0.1:8766
-
-serve: ## mirror on a loop with a status page on SERVE_ADDR (default 127.0.0.1:8766)
-	go run ./cmd/cacher -serve $(SERVE_ADDR) $(ARGS)
+serve: ## mirror on a loop with a status page on SERVE_ADDR from .env (default 127.0.0.1:8766)
+	go run ./cmd/cacher -serve $(ARGS)
 
 # ── Local development ───────────────────────────────────────────────────────
 # Run against a throwaway anvil chain and a local OBP. Contract addresses come
@@ -50,7 +48,7 @@ run-local: ## mirror the LOCAL chain into the LOCAL OBP (limit types via ARGS=)
 	@$(load_local_env) go run ./cmd/cacher $(ARGS)
 
 serve-local: ## serve mode against the LOCAL chain and OBP
-	@$(load_local_env) go run ./cmd/cacher -serve $(SERVE_ADDR) $(ARGS)
+	@$(load_local_env) go run ./cmd/cacher -serve $(ARGS)
 
 clean: ## remove build artifacts
 	rm -rf bin

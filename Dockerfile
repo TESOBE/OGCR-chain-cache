@@ -13,5 +13,12 @@ RUN apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=builder /out/cacher /usr/local/bin/cacher
 COPY --from=builder /out/setup-entity /usr/local/bin/setup-entity
-# Default to the cacher service; run `setup-entity` by overriding the command.
-CMD ["cacher"]
+# Default to the cacher service in serve mode: it mirrors every
+# SYNC_INTERVAL_SECONDS (default 30), re-declares its Platform App Scopes, and
+# serves the status page on SERVE_ADDR. Inside the container that has to be all
+# interfaces; publish the port only to localhost or a private network, since the
+# page needs no login and has a Run now button. For a single run, override the
+# command with `cacher`; for the entity tool, with `setup-entity`.
+ENV SERVE_ADDR=0.0.0.0:8766
+EXPOSE 8766
+CMD ["cacher", "-serve"]

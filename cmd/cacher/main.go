@@ -12,9 +12,10 @@
 // business key).
 //
 // With -serve it keeps running instead: it mirrors every SYNC_INTERVAL_SECONDS
-// (default 30) and serves a status page and /health on the given address.
+// (default 30) and serves a status page and /health on SERVE_ADDR (default
+// 127.0.0.1:8766).
 //
-//	cacher -serve 127.0.0.1:8766 [types...]
+//	cacher -serve [types...]
 //
 // Before mirroring it creates any of its entities that are missing in OBP and
 // updates any whose definition has changed (AUTO_SETUP_ENTITIES=false turns
@@ -47,9 +48,9 @@ import (
 var tokenTypes = []string{"parcel", "activity", "certification", "credit"}
 
 func main() {
-	serveAddr := flag.String("serve", "", "keep running: mirror on a loop and serve a status page on this address (e.g. 127.0.0.1:8766)")
+	serveMode := flag.Bool("serve", false, "keep running: mirror on a loop and serve a status page on SERVE_ADDR (default 127.0.0.1:8766)")
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "usage: cacher [-serve addr] [%s ...]\n", strings.Join(tokenTypes, "|"))
+		fmt.Fprintf(flag.CommandLine.Output(), "usage: cacher [-serve] [%s ...]\n", strings.Join(tokenTypes, "|"))
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -123,7 +124,7 @@ func main() {
 		defs:            defs,
 	}
 
-	if *serveAddr == "" {
+	if !*serveMode {
 		// Declared first, so the definition Scopes are asked for even when no
 		// entity exists yet, and again after creating one, so its record Scopes
 		// are asked for too.
@@ -137,7 +138,7 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if err := serve(ctx, rn, *serveAddr); err != nil {
+	if err := serve(ctx, rn, cfg.ServeAddr); err != nil {
 		slog.Error("serve failed", "err", err)
 		os.Exit(1)
 	}

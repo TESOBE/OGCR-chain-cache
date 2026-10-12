@@ -254,10 +254,11 @@ created; the cacher can read and write records once they are granted.
 ### Serve mode: a loop with a status page
 
 `cacher` mirrors once and exits. With `-serve` it keeps running instead: it
-mirrors every `SYNC_INTERVAL_SECONDS` (default 30) and serves a status page:
+mirrors every `SYNC_INTERVAL_SECONDS` (default 30) and serves a status page on
+`SERVE_ADDR` (default `127.0.0.1:8766`), both read from `.env`:
 
 ```bash
-make serve               # go run ./cmd/cacher -serve 127.0.0.1:8766
+make serve               # go run ./cmd/cacher -serve
 make serve-local         # the same against the local chain and OBP
 ```
 
@@ -275,6 +276,12 @@ The page shows only this process's own state, so it needs no OBP login. Bind it
 to localhost: anyone who can reach it sees the error messages and can trigger a
 run. URLs on the page are cut to their host, since an RPC URL can carry an API
 key.
+
+The container image runs serve mode by default (`cacher -serve`, with
+`SERVE_ADDR=0.0.0.0:8766`).
+Inside the container it has to listen on all interfaces, so keep the exposure
+down where the port is published, e.g. `docker run -p 127.0.0.1:8766:8766 ...`.
+Override the command with `cacher` for a single run.
 
 In serve mode the Platform App's Scopes are declared before every run until all
 the required ones are held, so a grant shows on the page by the next run; after

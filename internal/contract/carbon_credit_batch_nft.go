@@ -31,23 +31,34 @@ var (
 
 // CarbonCreditBatchNFTBatchData is an auto generated low-level Go binding around an user-defined struct.
 type CarbonCreditBatchNFTBatchData struct {
-	ActivityNftId           *big.Int
-	CreditType              string
-	ActivityUrl             string
-	ActivityHash            string
-	OperatorUrl             string
-	OperatorHash            string
-	CertificationUrl        string
-	CertificationHash       string
-	CertificationSchemeUrl  string
-	CertificationSchemeHash string
-	CertificationBodyUrl    string
-	CertificationBodyHash   string
+	CarbonCreditBatchId         string
+	BatchName                   string
+	ActivityId                  string
+	ActivityNftId               *big.Int
+	ActivityName                string
+	ActivityUrl                 string
+	ActivityHash                string
+	CountryId                   string
+	OperatorUrl                 string
+	OperatorHash                string
+	CertificateOfComplianceUri  string
+	CertificateOfComplianceHash string
+	UnitType                    string
+	MonitoringPeriodStartDate   string
+	MonitoringPeriodEndDate     string
+	Amount                      *big.Int
+	StatusCode                  string
+	IssueDate                   string
+	ExpiryDate                  string
+	CertificationSchemeUrl      string
+	CertificationSchemeHash     string
+	CertificationBodyUrl        string
+	CertificationBodyHash       string
 }
 
 // CarbonCreditBatchNFTMetaData contains all meta data concerning the CarbonCreditBatchNFT contract.
 var CarbonCreditBatchNFTMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"_registry\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_accountImplementation\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_minter\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"ACCOUNT_IMPLEMENTATION\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"ERC6551_REGISTRY\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"approve\",\"inputs\":[{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"balanceOf\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"batchKey\",\"inputs\":[{\"name\":\"activity_nft_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"credit_type\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"batches\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"activity_nft_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"credit_type\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"operator_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"operator_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_scheme_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_scheme_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_body_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_body_hash\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApproved\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getBatch\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structCarbonCreditBatchNFT.BatchData\",\"components\":[{\"name\":\"activity_nft_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"credit_type\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"operator_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"operator_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_scheme_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_scheme_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_body_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_body_hash\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTBA\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTokenIdByBatchKey\",\"inputs\":[{\"name\":\"activity_nft_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"credit_type\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isApprovedForAll\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"mint\",\"inputs\":[{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"activity_nft_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"credit_type\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"operator_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"operator_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_scheme_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_scheme_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_body_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_body_hash\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"tba\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"minter\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"name\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"nextId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"owner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"ownerOf\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"renounceOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"safeTransferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"safeTransferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setApprovalForAll\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"approved\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setMinter\",\"inputs\":[{\"name\":\"_minter\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"symbol\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenBoundAccount\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenIdByBatchKey\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenURI\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"transferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transferOwnership\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"Approval\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"approved\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ApprovalForAll\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"approved\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"BatchMinted\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"to\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"activity_nft_id\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"credit_type\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"tba\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"MinterUpdated\",\"inputs\":[{\"name\":\"oldMinter\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newMinter\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferred\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Transfer\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"_registry\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_accountImplementation\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_minter\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"ACCOUNT_IMPLEMENTATION\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"ERC6551_REGISTRY\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"approve\",\"inputs\":[{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"balanceOf\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApproved\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getBatch\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structCarbonCreditBatchNFT.BatchData\",\"components\":[{\"name\":\"carbon_credit_batch_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"batch_name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_nft_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"activity_name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"country_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"operator_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"operator_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certificate_of_compliance_uri\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certificate_of_compliance_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"unit_type\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"monitoring_period_start_date\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"monitoring_period_end_date\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"status_code\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"issue_date\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"expiry_date\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_scheme_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_scheme_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_body_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_body_hash\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTBA\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isApprovedForAll\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"mint\",\"inputs\":[{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"data\",\"type\":\"tuple\",\"internalType\":\"structCarbonCreditBatchNFT.BatchData\",\"components\":[{\"name\":\"carbon_credit_batch_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"batch_name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_nft_id\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"activity_name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"activity_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"country_id\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"operator_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"operator_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certificate_of_compliance_uri\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certificate_of_compliance_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"unit_type\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"monitoring_period_start_date\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"monitoring_period_end_date\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"status_code\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"issue_date\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"expiry_date\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_scheme_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_scheme_hash\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_body_url\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"certification_body_hash\",\"type\":\"string\",\"internalType\":\"string\"}]}],\"outputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"tba\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"minter\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"name\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"nextId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"owner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"ownerOf\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"renounceOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"safeTransferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"safeTransferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setApprovalForAll\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"approved\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setMinter\",\"inputs\":[{\"name\":\"_minter\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"symbol\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenBoundAccount\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenIdByBatchId\",\"inputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenURI\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"transferFrom\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transferOwnership\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"Approval\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"approved\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ApprovalForAll\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"approved\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"BatchMinted\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"to\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"activity_nft_id\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"carbon_credit_batch_id\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"unit_type\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"tba\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"MinterUpdated\",\"inputs\":[{\"name\":\"oldMinter\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newMinter\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferred\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Transfer\",\"inputs\":[{\"name\":\"from\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false}]",
 }
 
 // CarbonCreditBatchNFTABI is the input ABI used to generate the binding from.
@@ -289,132 +300,6 @@ func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCallerSession) BalanceOf(owner 
 	return _CarbonCreditBatchNFT.Contract.BalanceOf(&_CarbonCreditBatchNFT.CallOpts, owner)
 }
 
-// BatchKey is a free data retrieval call binding the contract method 0x736748ec.
-//
-// Solidity: function batchKey(uint256 activity_nft_id, string credit_type) pure returns(bytes32)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCaller) BatchKey(opts *bind.CallOpts, activity_nft_id *big.Int, credit_type string) ([32]byte, error) {
-	var out []interface{}
-	err := _CarbonCreditBatchNFT.contract.Call(opts, &out, "batchKey", activity_nft_id, credit_type)
-
-	if err != nil {
-		return *new([32]byte), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
-
-	return out0, err
-
-}
-
-// BatchKey is a free data retrieval call binding the contract method 0x736748ec.
-//
-// Solidity: function batchKey(uint256 activity_nft_id, string credit_type) pure returns(bytes32)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTSession) BatchKey(activity_nft_id *big.Int, credit_type string) ([32]byte, error) {
-	return _CarbonCreditBatchNFT.Contract.BatchKey(&_CarbonCreditBatchNFT.CallOpts, activity_nft_id, credit_type)
-}
-
-// BatchKey is a free data retrieval call binding the contract method 0x736748ec.
-//
-// Solidity: function batchKey(uint256 activity_nft_id, string credit_type) pure returns(bytes32)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCallerSession) BatchKey(activity_nft_id *big.Int, credit_type string) ([32]byte, error) {
-	return _CarbonCreditBatchNFT.Contract.BatchKey(&_CarbonCreditBatchNFT.CallOpts, activity_nft_id, credit_type)
-}
-
-// Batches is a free data retrieval call binding the contract method 0xb32c4d8d.
-//
-// Solidity: function batches(uint256 ) view returns(uint256 activity_nft_id, string credit_type, string activity_url, string activity_hash, string operator_url, string operator_hash, string certification_url, string certification_hash, string certification_scheme_url, string certification_scheme_hash, string certification_body_url, string certification_body_hash)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCaller) Batches(opts *bind.CallOpts, arg0 *big.Int) (struct {
-	ActivityNftId           *big.Int
-	CreditType              string
-	ActivityUrl             string
-	ActivityHash            string
-	OperatorUrl             string
-	OperatorHash            string
-	CertificationUrl        string
-	CertificationHash       string
-	CertificationSchemeUrl  string
-	CertificationSchemeHash string
-	CertificationBodyUrl    string
-	CertificationBodyHash   string
-}, error) {
-	var out []interface{}
-	err := _CarbonCreditBatchNFT.contract.Call(opts, &out, "batches", arg0)
-
-	outstruct := new(struct {
-		ActivityNftId           *big.Int
-		CreditType              string
-		ActivityUrl             string
-		ActivityHash            string
-		OperatorUrl             string
-		OperatorHash            string
-		CertificationUrl        string
-		CertificationHash       string
-		CertificationSchemeUrl  string
-		CertificationSchemeHash string
-		CertificationBodyUrl    string
-		CertificationBodyHash   string
-	})
-	if err != nil {
-		return *outstruct, err
-	}
-
-	outstruct.ActivityNftId = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-	outstruct.CreditType = *abi.ConvertType(out[1], new(string)).(*string)
-	outstruct.ActivityUrl = *abi.ConvertType(out[2], new(string)).(*string)
-	outstruct.ActivityHash = *abi.ConvertType(out[3], new(string)).(*string)
-	outstruct.OperatorUrl = *abi.ConvertType(out[4], new(string)).(*string)
-	outstruct.OperatorHash = *abi.ConvertType(out[5], new(string)).(*string)
-	outstruct.CertificationUrl = *abi.ConvertType(out[6], new(string)).(*string)
-	outstruct.CertificationHash = *abi.ConvertType(out[7], new(string)).(*string)
-	outstruct.CertificationSchemeUrl = *abi.ConvertType(out[8], new(string)).(*string)
-	outstruct.CertificationSchemeHash = *abi.ConvertType(out[9], new(string)).(*string)
-	outstruct.CertificationBodyUrl = *abi.ConvertType(out[10], new(string)).(*string)
-	outstruct.CertificationBodyHash = *abi.ConvertType(out[11], new(string)).(*string)
-
-	return *outstruct, err
-
-}
-
-// Batches is a free data retrieval call binding the contract method 0xb32c4d8d.
-//
-// Solidity: function batches(uint256 ) view returns(uint256 activity_nft_id, string credit_type, string activity_url, string activity_hash, string operator_url, string operator_hash, string certification_url, string certification_hash, string certification_scheme_url, string certification_scheme_hash, string certification_body_url, string certification_body_hash)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTSession) Batches(arg0 *big.Int) (struct {
-	ActivityNftId           *big.Int
-	CreditType              string
-	ActivityUrl             string
-	ActivityHash            string
-	OperatorUrl             string
-	OperatorHash            string
-	CertificationUrl        string
-	CertificationHash       string
-	CertificationSchemeUrl  string
-	CertificationSchemeHash string
-	CertificationBodyUrl    string
-	CertificationBodyHash   string
-}, error) {
-	return _CarbonCreditBatchNFT.Contract.Batches(&_CarbonCreditBatchNFT.CallOpts, arg0)
-}
-
-// Batches is a free data retrieval call binding the contract method 0xb32c4d8d.
-//
-// Solidity: function batches(uint256 ) view returns(uint256 activity_nft_id, string credit_type, string activity_url, string activity_hash, string operator_url, string operator_hash, string certification_url, string certification_hash, string certification_scheme_url, string certification_scheme_hash, string certification_body_url, string certification_body_hash)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCallerSession) Batches(arg0 *big.Int) (struct {
-	ActivityNftId           *big.Int
-	CreditType              string
-	ActivityUrl             string
-	ActivityHash            string
-	OperatorUrl             string
-	OperatorHash            string
-	CertificationUrl        string
-	CertificationHash       string
-	CertificationSchemeUrl  string
-	CertificationSchemeHash string
-	CertificationBodyUrl    string
-	CertificationBodyHash   string
-}, error) {
-	return _CarbonCreditBatchNFT.Contract.Batches(&_CarbonCreditBatchNFT.CallOpts, arg0)
-}
-
 // GetApproved is a free data retrieval call binding the contract method 0x081812fc.
 //
 // Solidity: function getApproved(uint256 tokenId) view returns(address)
@@ -448,7 +333,7 @@ func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCallerSession) GetApproved(toke
 
 // GetBatch is a free data retrieval call binding the contract method 0x5ac44282.
 //
-// Solidity: function getBatch(uint256 tokenId) view returns((uint256,string,string,string,string,string,string,string,string,string,string,string))
+// Solidity: function getBatch(uint256 tokenId) view returns((string,string,string,uint256,string,string,string,string,string,string,string,string,string,string,string,uint256,string,string,string,string,string,string,string))
 func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCaller) GetBatch(opts *bind.CallOpts, tokenId *big.Int) (CarbonCreditBatchNFTBatchData, error) {
 	var out []interface{}
 	err := _CarbonCreditBatchNFT.contract.Call(opts, &out, "getBatch", tokenId)
@@ -465,14 +350,14 @@ func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCaller) GetBatch(opts *bind.Cal
 
 // GetBatch is a free data retrieval call binding the contract method 0x5ac44282.
 //
-// Solidity: function getBatch(uint256 tokenId) view returns((uint256,string,string,string,string,string,string,string,string,string,string,string))
+// Solidity: function getBatch(uint256 tokenId) view returns((string,string,string,uint256,string,string,string,string,string,string,string,string,string,string,string,uint256,string,string,string,string,string,string,string))
 func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTSession) GetBatch(tokenId *big.Int) (CarbonCreditBatchNFTBatchData, error) {
 	return _CarbonCreditBatchNFT.Contract.GetBatch(&_CarbonCreditBatchNFT.CallOpts, tokenId)
 }
 
 // GetBatch is a free data retrieval call binding the contract method 0x5ac44282.
 //
-// Solidity: function getBatch(uint256 tokenId) view returns((uint256,string,string,string,string,string,string,string,string,string,string,string))
+// Solidity: function getBatch(uint256 tokenId) view returns((string,string,string,uint256,string,string,string,string,string,string,string,string,string,string,string,uint256,string,string,string,string,string,string,string))
 func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCallerSession) GetBatch(tokenId *big.Int) (CarbonCreditBatchNFTBatchData, error) {
 	return _CarbonCreditBatchNFT.Contract.GetBatch(&_CarbonCreditBatchNFT.CallOpts, tokenId)
 }
@@ -506,37 +391,6 @@ func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTSession) GetTBA(tokenId *big.In
 // Solidity: function getTBA(uint256 tokenId) view returns(address)
 func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCallerSession) GetTBA(tokenId *big.Int) (common.Address, error) {
 	return _CarbonCreditBatchNFT.Contract.GetTBA(&_CarbonCreditBatchNFT.CallOpts, tokenId)
-}
-
-// GetTokenIdByBatchKey is a free data retrieval call binding the contract method 0xb2448627.
-//
-// Solidity: function getTokenIdByBatchKey(uint256 activity_nft_id, string credit_type) view returns(uint256)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCaller) GetTokenIdByBatchKey(opts *bind.CallOpts, activity_nft_id *big.Int, credit_type string) (*big.Int, error) {
-	var out []interface{}
-	err := _CarbonCreditBatchNFT.contract.Call(opts, &out, "getTokenIdByBatchKey", activity_nft_id, credit_type)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// GetTokenIdByBatchKey is a free data retrieval call binding the contract method 0xb2448627.
-//
-// Solidity: function getTokenIdByBatchKey(uint256 activity_nft_id, string credit_type) view returns(uint256)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTSession) GetTokenIdByBatchKey(activity_nft_id *big.Int, credit_type string) (*big.Int, error) {
-	return _CarbonCreditBatchNFT.Contract.GetTokenIdByBatchKey(&_CarbonCreditBatchNFT.CallOpts, activity_nft_id, credit_type)
-}
-
-// GetTokenIdByBatchKey is a free data retrieval call binding the contract method 0xb2448627.
-//
-// Solidity: function getTokenIdByBatchKey(uint256 activity_nft_id, string credit_type) view returns(uint256)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCallerSession) GetTokenIdByBatchKey(activity_nft_id *big.Int, credit_type string) (*big.Int, error) {
-	return _CarbonCreditBatchNFT.Contract.GetTokenIdByBatchKey(&_CarbonCreditBatchNFT.CallOpts, activity_nft_id, credit_type)
 }
 
 // IsApprovedForAll is a free data retrieval call binding the contract method 0xe985e9c5.
@@ -818,12 +672,12 @@ func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCallerSession) TokenBoundAccoun
 	return _CarbonCreditBatchNFT.Contract.TokenBoundAccount(&_CarbonCreditBatchNFT.CallOpts, arg0)
 }
 
-// TokenIdByBatchKey is a free data retrieval call binding the contract method 0xe2f77674.
+// TokenIdByBatchId is a free data retrieval call binding the contract method 0x790a67e0.
 //
-// Solidity: function tokenIdByBatchKey(bytes32 ) view returns(uint256)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCaller) TokenIdByBatchKey(opts *bind.CallOpts, arg0 [32]byte) (*big.Int, error) {
+// Solidity: function tokenIdByBatchId(string ) view returns(uint256)
+func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCaller) TokenIdByBatchId(opts *bind.CallOpts, arg0 string) (*big.Int, error) {
 	var out []interface{}
-	err := _CarbonCreditBatchNFT.contract.Call(opts, &out, "tokenIdByBatchKey", arg0)
+	err := _CarbonCreditBatchNFT.contract.Call(opts, &out, "tokenIdByBatchId", arg0)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -835,18 +689,18 @@ func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCaller) TokenIdByBatchKey(opts 
 
 }
 
-// TokenIdByBatchKey is a free data retrieval call binding the contract method 0xe2f77674.
+// TokenIdByBatchId is a free data retrieval call binding the contract method 0x790a67e0.
 //
-// Solidity: function tokenIdByBatchKey(bytes32 ) view returns(uint256)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTSession) TokenIdByBatchKey(arg0 [32]byte) (*big.Int, error) {
-	return _CarbonCreditBatchNFT.Contract.TokenIdByBatchKey(&_CarbonCreditBatchNFT.CallOpts, arg0)
+// Solidity: function tokenIdByBatchId(string ) view returns(uint256)
+func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTSession) TokenIdByBatchId(arg0 string) (*big.Int, error) {
+	return _CarbonCreditBatchNFT.Contract.TokenIdByBatchId(&_CarbonCreditBatchNFT.CallOpts, arg0)
 }
 
-// TokenIdByBatchKey is a free data retrieval call binding the contract method 0xe2f77674.
+// TokenIdByBatchId is a free data retrieval call binding the contract method 0x790a67e0.
 //
-// Solidity: function tokenIdByBatchKey(bytes32 ) view returns(uint256)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCallerSession) TokenIdByBatchKey(arg0 [32]byte) (*big.Int, error) {
-	return _CarbonCreditBatchNFT.Contract.TokenIdByBatchKey(&_CarbonCreditBatchNFT.CallOpts, arg0)
+// Solidity: function tokenIdByBatchId(string ) view returns(uint256)
+func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTCallerSession) TokenIdByBatchId(arg0 string) (*big.Int, error) {
+	return _CarbonCreditBatchNFT.Contract.TokenIdByBatchId(&_CarbonCreditBatchNFT.CallOpts, arg0)
 }
 
 // TokenURI is a free data retrieval call binding the contract method 0xc87b56dd.
@@ -901,25 +755,25 @@ func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTTransactorSession) Approve(to c
 	return _CarbonCreditBatchNFT.Contract.Approve(&_CarbonCreditBatchNFT.TransactOpts, to, tokenId)
 }
 
-// Mint is a paid mutator transaction binding the contract method 0x818f8c4a.
+// Mint is a paid mutator transaction binding the contract method 0x348b2425.
 //
-// Solidity: function mint(address to, uint256 activity_nft_id, string credit_type, string activity_url, string activity_hash, string operator_url, string operator_hash, string certification_url, string certification_hash, string certification_scheme_url, string certification_scheme_hash, string certification_body_url, string certification_body_hash) returns(uint256 tokenId, address tba)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTTransactor) Mint(opts *bind.TransactOpts, to common.Address, activity_nft_id *big.Int, credit_type string, activity_url string, activity_hash string, operator_url string, operator_hash string, certification_url string, certification_hash string, certification_scheme_url string, certification_scheme_hash string, certification_body_url string, certification_body_hash string) (*types.Transaction, error) {
-	return _CarbonCreditBatchNFT.contract.Transact(opts, "mint", to, activity_nft_id, credit_type, activity_url, activity_hash, operator_url, operator_hash, certification_url, certification_hash, certification_scheme_url, certification_scheme_hash, certification_body_url, certification_body_hash)
+// Solidity: function mint(address to, (string,string,string,uint256,string,string,string,string,string,string,string,string,string,string,string,uint256,string,string,string,string,string,string,string) data) returns(uint256 tokenId, address tba)
+func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTTransactor) Mint(opts *bind.TransactOpts, to common.Address, data CarbonCreditBatchNFTBatchData) (*types.Transaction, error) {
+	return _CarbonCreditBatchNFT.contract.Transact(opts, "mint", to, data)
 }
 
-// Mint is a paid mutator transaction binding the contract method 0x818f8c4a.
+// Mint is a paid mutator transaction binding the contract method 0x348b2425.
 //
-// Solidity: function mint(address to, uint256 activity_nft_id, string credit_type, string activity_url, string activity_hash, string operator_url, string operator_hash, string certification_url, string certification_hash, string certification_scheme_url, string certification_scheme_hash, string certification_body_url, string certification_body_hash) returns(uint256 tokenId, address tba)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTSession) Mint(to common.Address, activity_nft_id *big.Int, credit_type string, activity_url string, activity_hash string, operator_url string, operator_hash string, certification_url string, certification_hash string, certification_scheme_url string, certification_scheme_hash string, certification_body_url string, certification_body_hash string) (*types.Transaction, error) {
-	return _CarbonCreditBatchNFT.Contract.Mint(&_CarbonCreditBatchNFT.TransactOpts, to, activity_nft_id, credit_type, activity_url, activity_hash, operator_url, operator_hash, certification_url, certification_hash, certification_scheme_url, certification_scheme_hash, certification_body_url, certification_body_hash)
+// Solidity: function mint(address to, (string,string,string,uint256,string,string,string,string,string,string,string,string,string,string,string,uint256,string,string,string,string,string,string,string) data) returns(uint256 tokenId, address tba)
+func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTSession) Mint(to common.Address, data CarbonCreditBatchNFTBatchData) (*types.Transaction, error) {
+	return _CarbonCreditBatchNFT.Contract.Mint(&_CarbonCreditBatchNFT.TransactOpts, to, data)
 }
 
-// Mint is a paid mutator transaction binding the contract method 0x818f8c4a.
+// Mint is a paid mutator transaction binding the contract method 0x348b2425.
 //
-// Solidity: function mint(address to, uint256 activity_nft_id, string credit_type, string activity_url, string activity_hash, string operator_url, string operator_hash, string certification_url, string certification_hash, string certification_scheme_url, string certification_scheme_hash, string certification_body_url, string certification_body_hash) returns(uint256 tokenId, address tba)
-func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTTransactorSession) Mint(to common.Address, activity_nft_id *big.Int, credit_type string, activity_url string, activity_hash string, operator_url string, operator_hash string, certification_url string, certification_hash string, certification_scheme_url string, certification_scheme_hash string, certification_body_url string, certification_body_hash string) (*types.Transaction, error) {
-	return _CarbonCreditBatchNFT.Contract.Mint(&_CarbonCreditBatchNFT.TransactOpts, to, activity_nft_id, credit_type, activity_url, activity_hash, operator_url, operator_hash, certification_url, certification_hash, certification_scheme_url, certification_scheme_hash, certification_body_url, certification_body_hash)
+// Solidity: function mint(address to, (string,string,string,uint256,string,string,string,string,string,string,string,string,string,string,string,uint256,string,string,string,string,string,string,string) data) returns(uint256 tokenId, address tba)
+func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTTransactorSession) Mint(to common.Address, data CarbonCreditBatchNFTBatchData) (*types.Transaction, error) {
+	return _CarbonCreditBatchNFT.Contract.Mint(&_CarbonCreditBatchNFT.TransactOpts, to, data)
 }
 
 // RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
@@ -1454,17 +1308,19 @@ func (it *CarbonCreditBatchNFTBatchMintedIterator) Close() error {
 
 // CarbonCreditBatchNFTBatchMinted represents a BatchMinted event raised by the CarbonCreditBatchNFT contract.
 type CarbonCreditBatchNFTBatchMinted struct {
-	TokenId       *big.Int
-	To            common.Address
-	ActivityNftId *big.Int
-	CreditType    string
-	Tba           common.Address
-	Raw           types.Log // Blockchain specific contextual infos
+	TokenId             *big.Int
+	To                  common.Address
+	ActivityNftId       *big.Int
+	CarbonCreditBatchId string
+	UnitType            string
+	Amount              *big.Int
+	Tba                 common.Address
+	Raw                 types.Log // Blockchain specific contextual infos
 }
 
-// FilterBatchMinted is a free log retrieval operation binding the contract event 0x1867c14b901b830e4b26153cad86cb9f565457f05c78a38c40c6b5909b0abf18.
+// FilterBatchMinted is a free log retrieval operation binding the contract event 0x9a02b37dc081a82ad5d7e0ae0cfc87757774288e78889fb9f2899006c6c1ed3f.
 //
-// Solidity: event BatchMinted(uint256 indexed tokenId, address indexed to, uint256 indexed activity_nft_id, string credit_type, address tba)
+// Solidity: event BatchMinted(uint256 indexed tokenId, address indexed to, uint256 indexed activity_nft_id, string carbon_credit_batch_id, string unit_type, uint256 amount, address tba)
 func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTFilterer) FilterBatchMinted(opts *bind.FilterOpts, tokenId []*big.Int, to []common.Address, activity_nft_id []*big.Int) (*CarbonCreditBatchNFTBatchMintedIterator, error) {
 
 	var tokenIdRule []interface{}
@@ -1487,9 +1343,9 @@ func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTFilterer) FilterBatchMinted(opt
 	return &CarbonCreditBatchNFTBatchMintedIterator{contract: _CarbonCreditBatchNFT.contract, event: "BatchMinted", logs: logs, sub: sub}, nil
 }
 
-// WatchBatchMinted is a free log subscription operation binding the contract event 0x1867c14b901b830e4b26153cad86cb9f565457f05c78a38c40c6b5909b0abf18.
+// WatchBatchMinted is a free log subscription operation binding the contract event 0x9a02b37dc081a82ad5d7e0ae0cfc87757774288e78889fb9f2899006c6c1ed3f.
 //
-// Solidity: event BatchMinted(uint256 indexed tokenId, address indexed to, uint256 indexed activity_nft_id, string credit_type, address tba)
+// Solidity: event BatchMinted(uint256 indexed tokenId, address indexed to, uint256 indexed activity_nft_id, string carbon_credit_batch_id, string unit_type, uint256 amount, address tba)
 func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTFilterer) WatchBatchMinted(opts *bind.WatchOpts, sink chan<- *CarbonCreditBatchNFTBatchMinted, tokenId []*big.Int, to []common.Address, activity_nft_id []*big.Int) (event.Subscription, error) {
 
 	var tokenIdRule []interface{}
@@ -1537,9 +1393,9 @@ func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTFilterer) WatchBatchMinted(opts
 	}), nil
 }
 
-// ParseBatchMinted is a log parse operation binding the contract event 0x1867c14b901b830e4b26153cad86cb9f565457f05c78a38c40c6b5909b0abf18.
+// ParseBatchMinted is a log parse operation binding the contract event 0x9a02b37dc081a82ad5d7e0ae0cfc87757774288e78889fb9f2899006c6c1ed3f.
 //
-// Solidity: event BatchMinted(uint256 indexed tokenId, address indexed to, uint256 indexed activity_nft_id, string credit_type, address tba)
+// Solidity: event BatchMinted(uint256 indexed tokenId, address indexed to, uint256 indexed activity_nft_id, string carbon_credit_batch_id, string unit_type, uint256 amount, address tba)
 func (_CarbonCreditBatchNFT *CarbonCreditBatchNFTFilterer) ParseBatchMinted(log types.Log) (*CarbonCreditBatchNFTBatchMinted, error) {
 	event := new(CarbonCreditBatchNFTBatchMinted)
 	if err := _CarbonCreditBatchNFT.contract.UnpackLog(event, "BatchMinted", log); err != nil {

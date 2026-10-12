@@ -1,4 +1,4 @@
-// Package eth reads the OGCR token family off the OGCR chain (chain id 2025):
+// Package eth reads the OGCR token family off the OGCR chain (chain id 20253):
 // ParcelNFT, ActivityNFT, CertificationNFT, CarbonCreditBatchNFT and the
 // CarbonCredit ERC-20. It reads those tokens back so they can be mirrored into
 // the OBP `*_on_chain` dynamic entities.
@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -45,11 +46,21 @@ type OnChainParcel struct {
 // OnChainActivity is the chain-side view of one ActivityNFT, shaped for the OBP
 // `activity_on_chain` entity.
 type OnChainActivity struct {
-	ActivityID      string `json:"activity_id"`
-	TokenID         uint64 `json:"token_id"`
-	OperatorID      string `json:"operator_id"`
-	Name            string `json:"name"`
-	ActivityType    string `json:"activity_type"`
+	ActivityID            string `json:"activity_id"`
+	TokenID               uint64 `json:"token_id"`
+	OperatorID            string `json:"operator_id"`
+	OperatorName          string `json:"operator_name"`
+	Name                  string `json:"name"`
+	Summary               string `json:"summary"`
+	Website               string `json:"website"`
+	ActivityType          string `json:"activity_type"`
+	UnitTypes             string `json:"unit_types"`
+	City                  string `json:"city"`
+	CountryID             string `json:"country_id"`
+	CertificationSchemeID string `json:"certification_scheme_id"`
+	// ParcelIDs is the contract's parcel_ids[] joined with commas, the same
+	// rendering tokenURI uses, so it fits a string entity field.
+	ParcelIDs       string `json:"parcel_ids"`
 	StartDate       string `json:"start_date"`
 	EndDate         string `json:"end_date"`
 	ActivityURL     string `json:"activity_url"`
@@ -67,44 +78,72 @@ type OnChainActivity struct {
 // OnChainCertification is the chain-side view of one CertificationNFT, shaped
 // for the OBP `certification_on_chain` entity.
 type OnChainCertification struct {
-	CertificationOfComplianceID string `json:"certification_of_compliance_id"`
+	CertificateOfComplianceID   string `json:"certificate_of_compliance_id"`
 	TokenID                     uint64 `json:"token_id"`
+	CertificateOfComplianceURI  string `json:"certificate_of_compliance_uri"`
+	CertificateOfComplianceHash string `json:"certificate_of_compliance_hash"`
+	ActivityID                  string `json:"activity_id"`
 	ActivityNftID               uint64 `json:"activity_nft_id"`
-	CertificationSchemeID       string `json:"certification_scheme_id"`
-	CertificationBodyID         string `json:"certification_body_id"`
+	ActivityURI                 string `json:"activity_uri"`
+	ActivityHash                string `json:"activity_hash"`
+	ActivityName                string `json:"activity_name"`
+	CertificationSchemeName     string `json:"certification_scheme_name"`
+	CertificationSchemeURI      string `json:"certification_scheme_uri"`
+	CertificationSchemeHash     string `json:"certification_scheme_hash"`
+	CertificationBodyName       string `json:"certification_body_name"`
+	CertificationBodyURI        string `json:"certification_body_uri"`
+	CertificationBodyHash       string `json:"certification_body_hash"`
+	CountryID                   string `json:"country_id"`
 	IssueDate                   string `json:"issue_date"`
 	ExpiryDate                  string `json:"expiry_date"`
-	CertificationStatus         string `json:"certification_status"`
-	ActivityURL                 string `json:"activity_url"`
-	ActivityHash                string `json:"activity_hash"`
-	CertificationURL            string `json:"certification_url"`
-	CertificationHash           string `json:"certification_hash"`
-	OwnerAddress                string `json:"owner_address"`
-	TokenURI                    string `json:"token_uri"`
-	ContractAddress             string `json:"contract_address"`
-	ChainID                     uint64 `json:"chain_id"`
-	TxHash                      string `json:"tx_hash"`
-	BlockNumber                 uint64 `json:"block_number"`
+	AuditReportURI              string `json:"audit_report_uri"`
+	AuditReportHash             string `json:"audit_report_hash"`
+	// Quantities are decimal strings (tonnes CO2e) exactly as on the
+	// certificate; empty when the certificate carries no value.
+	CarbonRemovalsUnderBaseline                   string `json:"carbon_removals_under_baseline"`
+	SoilEmissionsUnderBaseline                    string `json:"soil_emissions_under_baseline"`
+	PermanentNetCarbonRemovalBenefit              string `json:"permanent_net_carbon_removal_benefit"`
+	CarbonFarmingTemporaryNetCarbonRemovalBenefit string `json:"carbon_farming_temporary_net_carbon_removal_benefit"`
+	CarbonFarmingNetSoilEmissionReductionBenefit  string `json:"carbon_farming_net_soil_emission_reduction_benefit"`
+	CarbonStorageTemporaryNetCarbonRemovalBenefit string `json:"carbon_storage_temporary_net_carbon_removal_benefit"`
+	UnitTypes                                     string `json:"unit_types"`
+	CertificationStatus                           string `json:"certification_status"`
+	OwnerAddress                                  string `json:"owner_address"`
+	TokenURI                                      string `json:"token_uri"`
+	ContractAddress                               string `json:"contract_address"`
+	ChainID                                       uint64 `json:"chain_id"`
+	TxHash                                        string `json:"tx_hash"`
+	BlockNumber                                   uint64 `json:"block_number"`
 }
 
 // OnChainCreditBatch is the chain-side view of one CarbonCreditBatchNFT, shaped
-// for the OBP `carbon_credit_batch_on_chain` entity. A batch is one
-// (activity_nft_id, credit_type) pair and owns an ERC-6551 token-bound account
-// that holds its CarbonCredit balance.
+// for the OBP `carbon_credit_batch_on_chain` entity. A batch is the units of one unit type
+// issued for an activity over one monitoring period, and owns an ERC-6551
+// token-bound account that holds its CarbonCredit balance.
 type OnChainCreditBatch struct {
-	// BatchKey is "<activity_nft_id>:<credit_type>", the contract's own
-	// uniqueness constraint rendered as a string so it can serve as the
-	// business key for the OBP upsert.
-	BatchKey                string `json:"batch_key"`
-	TokenID                 uint64 `json:"token_id"`
-	CreditType              string `json:"credit_type"`
-	ActivityNftID           uint64 `json:"activity_nft_id"`
-	ActivityURL             string `json:"activity_url"`
-	ActivityHash            string `json:"activity_hash"`
-	OperatorURL             string `json:"operator_url"`
-	OperatorHash            string `json:"operator_hash"`
-	CertificationURL        string `json:"certification_url"`
-	CertificationHash       string `json:"certification_hash"`
+	CarbonCreditBatchID         string `json:"carbon_credit_batch_id"`
+	TokenID                     uint64 `json:"token_id"`
+	BatchName                   string `json:"batch_name"`
+	ActivityID                  string `json:"activity_id"`
+	ActivityNftID               uint64 `json:"activity_nft_id"`
+	ActivityName                string `json:"activity_name"`
+	ActivityURL                 string `json:"activity_url"`
+	ActivityHash                string `json:"activity_hash"`
+	CountryID                   string `json:"country_id"`
+	OperatorURL                 string `json:"operator_url"`
+	OperatorHash                string `json:"operator_hash"`
+	CertificateOfComplianceURI  string `json:"certificate_of_compliance_uri"`
+	CertificateOfComplianceHash string `json:"certificate_of_compliance_hash"`
+	UnitType                    string `json:"unit_type"`
+	MonitoringPeriodStartDate   string `json:"monitoring_period_start_date"`
+	MonitoringPeriodEndDate     string `json:"monitoring_period_end_date"`
+	// Amount is the units issued for the batch at mint, in CarbonCredit base
+	// units (18 decimals), as a decimal string because a uint256 does not fit
+	// an integer field.
+	Amount                  string `json:"amount"`
+	StatusCode              string `json:"status_code"`
+	IssueDate               string `json:"issue_date"`
+	ExpiryDate              string `json:"expiry_date"`
 	CertificationSchemeURL  string `json:"certification_scheme_url"`
 	CertificationSchemeHash string `json:"certification_scheme_hash"`
 	CertificationBodyURL    string `json:"certification_body_url"`
@@ -465,22 +504,30 @@ func (r *Reader) ScanActivities(ctx context.Context, fromBlock uint64) ([]*OnCha
 				return fmt.Errorf("enrich activity token %s: %w", ev.TokenId, err)
 			}
 			out = append(out, &OnChainActivity{
-				ActivityID:      data.ActivityId,
-				TokenID:         ev.TokenId.Uint64(),
-				OperatorID:      data.OperatorId,
-				Name:            data.Name,
-				ActivityType:    data.ActivityType,
-				StartDate:       data.StartDate,
-				EndDate:         data.EndDate,
-				ActivityURL:     data.ActivityUrl,
-				ActivityHash:    data.ActivityHash,
-				OwnerAddress:    owner.Hex(),
-				TokenURI:        uri,
-				ContractAddress: r.activityAddr.Hex(),
-				ChainID:         r.chainID,
-				TxHash:          ev.Raw.TxHash.Hex(),
-				BlockNumber:     ev.Raw.BlockNumber,
-				MintedAt:        mintedAt,
+				ActivityID:            data.ActivityId,
+				TokenID:               ev.TokenId.Uint64(),
+				OperatorID:            data.OperatorId,
+				OperatorName:          data.OperatorName,
+				Name:                  data.Name,
+				Summary:               data.Summary,
+				Website:               data.Website,
+				ActivityType:          data.ActivityType,
+				UnitTypes:             data.UnitTypes,
+				City:                  data.City,
+				CountryID:             data.CountryId,
+				CertificationSchemeID: data.CertificationSchemeId,
+				ParcelIDs:             strings.Join(data.ParcelIds, ","),
+				StartDate:             data.StartDate,
+				EndDate:               data.EndDate,
+				ActivityURL:           data.ActivityUrl,
+				ActivityHash:          data.ActivityHash,
+				OwnerAddress:          owner.Hex(),
+				TokenURI:              uri,
+				ContractAddress:       r.activityAddr.Hex(),
+				ChainID:               r.chainID,
+				TxHash:                ev.Raw.TxHash.Hex(),
+				BlockNumber:           ev.Raw.BlockNumber,
+				MintedAt:              mintedAt,
 			})
 		}
 		return it.Error()
@@ -525,24 +572,40 @@ func (r *Reader) ScanCertifications(ctx context.Context, fromBlock uint64) ([]*O
 				return fmt.Errorf("enrich certification token %s: %w", ev.TokenId, err)
 			}
 			out = append(out, &OnChainCertification{
-				CertificationOfComplianceID: data.CertificationOfComplianceId,
-				TokenID:                     ev.TokenId.Uint64(),
-				ActivityNftID:               data.ActivityNftId.Uint64(),
-				CertificationSchemeID:       data.CertificationSchemeId,
-				CertificationBodyID:         data.CertificationBodyId,
-				IssueDate:                   data.IssueDate,
-				ExpiryDate:                  data.ExpiryDate,
-				CertificationStatus:         data.CertificationStatus,
-				ActivityURL:                 data.ActivityUrl,
-				ActivityHash:                data.ActivityHash,
-				CertificationURL:            data.CertificationUrl,
-				CertificationHash:           data.CertificationHash,
-				OwnerAddress:                owner.Hex(),
-				TokenURI:                    uri,
-				ContractAddress:             r.certAddr.Hex(),
-				ChainID:                     r.chainID,
-				TxHash:                      ev.Raw.TxHash.Hex(),
-				BlockNumber:                 ev.Raw.BlockNumber,
+				CertificateOfComplianceID:        data.CertificateOfComplianceId,
+				TokenID:                          ev.TokenId.Uint64(),
+				CertificateOfComplianceURI:       data.CertificateOfComplianceUri,
+				CertificateOfComplianceHash:      data.CertificateOfComplianceHash,
+				ActivityID:                       data.ActivityId,
+				ActivityNftID:                    data.ActivityNftId.Uint64(),
+				ActivityURI:                      data.ActivityUri,
+				ActivityHash:                     data.ActivityHash,
+				ActivityName:                     data.ActivityName,
+				CertificationSchemeName:          data.CertificationSchemeName,
+				CertificationSchemeURI:           data.CertificationSchemeUri,
+				CertificationSchemeHash:          data.CertificationSchemeHash,
+				CertificationBodyName:            data.CertificationBodyName,
+				CertificationBodyURI:             data.CertificationBodyUri,
+				CertificationBodyHash:            data.CertificationBodyHash,
+				CountryID:                        data.CountryId,
+				IssueDate:                        data.IssueDate,
+				ExpiryDate:                       data.ExpiryDate,
+				AuditReportURI:                   data.AuditReportUri,
+				AuditReportHash:                  data.AuditReportHash,
+				CarbonRemovalsUnderBaseline:      data.CarbonRemovalsUnderBaseline,
+				SoilEmissionsUnderBaseline:       data.SoilEmissionsUnderBaseline,
+				PermanentNetCarbonRemovalBenefit: data.PermanentNetCarbonRemovalBenefit,
+				CarbonFarmingTemporaryNetCarbonRemovalBenefit: data.CarbonFarmingTemporaryNetCarbonRemovalBenefit,
+				CarbonFarmingNetSoilEmissionReductionBenefit:  data.CarbonFarmingNetSoilEmissionReductionBenefit,
+				CarbonStorageTemporaryNetCarbonRemovalBenefit: data.CarbonStorageTemporaryNetCarbonRemovalBenefit,
+				UnitTypes:           data.UnitTypes,
+				CertificationStatus: data.CertificationStatus,
+				OwnerAddress:        owner.Hex(),
+				TokenURI:            uri,
+				ContractAddress:     r.certAddr.Hex(),
+				ChainID:             r.chainID,
+				TxHash:              ev.Raw.TxHash.Hex(),
+				BlockNumber:         ev.Raw.BlockNumber,
 			})
 		}
 		return it.Error()
@@ -619,27 +682,37 @@ func (r *Reader) ScanCreditBatches(ctx context.Context, fromBlock uint64) ([]*On
 			}
 
 			batch := &OnChainCreditBatch{
-				BatchKey:                fmt.Sprintf("%s:%s", data.ActivityNftId, data.CreditType),
-				TokenID:                 ev.TokenId.Uint64(),
-				CreditType:              data.CreditType,
-				ActivityNftID:           data.ActivityNftId.Uint64(),
-				ActivityURL:             data.ActivityUrl,
-				ActivityHash:            data.ActivityHash,
-				OperatorURL:             data.OperatorUrl,
-				OperatorHash:            data.OperatorHash,
-				CertificationURL:        data.CertificationUrl,
-				CertificationHash:       data.CertificationHash,
-				CertificationSchemeURL:  data.CertificationSchemeUrl,
-				CertificationSchemeHash: data.CertificationSchemeHash,
-				CertificationBodyURL:    data.CertificationBodyUrl,
-				CertificationBodyHash:   data.CertificationBodyHash,
-				TokenBoundAccount:       tba.Hex(),
-				OwnerAddress:            owner.Hex(),
-				TokenURI:                uri,
-				ContractAddress:         r.creditBatchAddr.Hex(),
-				ChainID:                 r.chainID,
-				TxHash:                  ev.Raw.TxHash.Hex(),
-				BlockNumber:             ev.Raw.BlockNumber,
+				CarbonCreditBatchID:         data.CarbonCreditBatchId,
+				TokenID:                     ev.TokenId.Uint64(),
+				BatchName:                   data.BatchName,
+				ActivityID:                  data.ActivityId,
+				ActivityNftID:               data.ActivityNftId.Uint64(),
+				ActivityName:                data.ActivityName,
+				ActivityURL:                 data.ActivityUrl,
+				ActivityHash:                data.ActivityHash,
+				CountryID:                   data.CountryId,
+				OperatorURL:                 data.OperatorUrl,
+				OperatorHash:                data.OperatorHash,
+				CertificateOfComplianceURI:  data.CertificateOfComplianceUri,
+				CertificateOfComplianceHash: data.CertificateOfComplianceHash,
+				UnitType:                    data.UnitType,
+				MonitoringPeriodStartDate:   data.MonitoringPeriodStartDate,
+				MonitoringPeriodEndDate:     data.MonitoringPeriodEndDate,
+				Amount:                      data.Amount.String(),
+				StatusCode:                  data.StatusCode,
+				IssueDate:                   data.IssueDate,
+				ExpiryDate:                  data.ExpiryDate,
+				CertificationSchemeURL:      data.CertificationSchemeUrl,
+				CertificationSchemeHash:     data.CertificationSchemeHash,
+				CertificationBodyURL:        data.CertificationBodyUrl,
+				CertificationBodyHash:       data.CertificationBodyHash,
+				TokenBoundAccount:           tba.Hex(),
+				OwnerAddress:                owner.Hex(),
+				TokenURI:                    uri,
+				ContractAddress:             r.creditBatchAddr.Hex(),
+				ChainID:                     r.chainID,
+				TxHash:                      ev.Raw.TxHash.Hex(),
+				BlockNumber:                 ev.Raw.BlockNumber,
 			}
 
 			if r.credit != nil {

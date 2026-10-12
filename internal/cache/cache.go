@@ -92,18 +92,17 @@ func UpsertActivity(client *obp.Client, a *eth.OnChainActivity) (string, error) 
 }
 
 // UpsertCertification mirrors a CertificationNFT into certification_on_chain
-// (keyed by certification_of_compliance_id).
+// (keyed by certificate_of_compliance_id).
 func UpsertCertification(client *obp.Client, c *eth.OnChainCertification) (string, error) {
-	return upsert(client, CertificationEntity, "certification_of_compliance_id", c.CertificationOfComplianceID, c)
+	return upsert(client, CertificationEntity, "certificate_of_compliance_id", c.CertificateOfComplianceID, c)
 }
 
 // UpsertCreditBatch mirrors a CarbonCreditBatchNFT into
-// carbon_credit_batch_on_chain, keyed by batch_key ("<activity_nft_id>:<credit_type>").
-// The token_id would be the more obvious key, but it is an integer field and the
-// match is done with a server-side query filter, so a string key is the safe
-// choice. batch_key is equally unique: the contract permits one batch per pair.
+// carbon_credit_batch_on_chain, keyed by carbon_credit_batch_id. The contract
+// permits one token per batch id, and a string key is safe to match with the
+// server-side query filter where the integer token_id is not.
 func UpsertCreditBatch(client *obp.Client, b *eth.OnChainCreditBatch) (string, error) {
-	return upsert(client, CreditBatchEntity, "batch_key", b.BatchKey, b)
+	return upsert(client, CreditBatchEntity, "carbon_credit_batch_id", b.CarbonCreditBatchID, b)
 }
 
 // UpsertCreditBalance mirrors one address's CarbonCredit balance into

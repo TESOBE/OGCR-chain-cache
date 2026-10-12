@@ -1,11 +1,11 @@
 {
   "certification_on_chain": {
-    "description": "Cache of CertificationNFT data minted on the OGCR chain (chain id 2025). One record per certification_of_compliance_id, populated by OGCR-chain-cache reading the chain.",
+    "description": "Cache of CertificationNFT data minted on the OGCR chain (chain id 20253). One record per certificate_of_compliance_id (a re-certification is a new certificate and a new record), populated by OGCR-chain-cache reading the chain.",
     "has_public_access": true,
     "auth_mode": "UserOrApplication",
-    "required": ["certification_of_compliance_id", "token_id"],
+    "required": ["certificate_of_compliance_id", "token_id"],
     "properties": {
-      "certification_of_compliance_id": {
+      "certificate_of_compliance_id": {
         "type": "string",
         "minLength": 1,
         "maxLength": 255,
@@ -17,22 +17,88 @@
         "example": 1,
         "description": "CertificationNFT token id minted for this certificate."
       },
+      "certificate_of_compliance_uri": {
+        "type": "string",
+        "maxLength": 2048,
+        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/banks/ogcr/certificate_of_compliance/coc_AB12CD34EF",
+        "description": "certificate_of_compliance_uri stored on-chain: link back to the OBP certificate_of_compliance entity."
+      },
+      "certificate_of_compliance_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "certificate_of_compliance_hash stored on-chain: keccak256 of the raw certificate_of_compliance entity body."
+      },
+      "activity_id": {
+        "type": "string",
+        "maxLength": 255,
+        "example": "activity_AB12CD34EF",
+        "description": "activity_id of the certified activity as stored on-chain."
+      },
       "activity_nft_id": {
         "type": "integer",
         "example": 1,
         "description": "ActivityNFT token id this certification references (stored on-chain)."
       },
-      "certification_scheme_id": {
+      "activity_uri": {
         "type": "string",
-        "maxLength": 255,
-        "example": "scheme_SALUS",
-        "description": "certification_scheme_id as stored on-chain."
+        "maxLength": 2048,
+        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/banks/ogcr/activity/activity_AB12CD34EF",
+        "description": "activity_uri stored on-chain: link back to the OBP activity entity."
       },
-      "certification_body_id": {
+      "activity_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "activity_hash stored on-chain: keccak256 of the raw activity entity body."
+      },
+      "activity_name": {
         "type": "string",
         "maxLength": 255,
-        "example": "body_VERRA",
-        "description": "certification_body_id as stored on-chain."
+        "example": "Reforestation 2024",
+        "description": "Activity name as stored on-chain."
+      },
+      "certification_scheme_name": {
+        "type": "string",
+        "maxLength": 255,
+        "example": "Example Certification Scheme",
+        "description": "Certification scheme name as stored on-chain."
+      },
+      "certification_scheme_uri": {
+        "type": "string",
+        "maxLength": 2048,
+        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/banks/ogcr/certification_scheme/scheme_SALUS",
+        "description": "certification_scheme_uri stored on-chain: link back to the OBP certification_scheme entity."
+      },
+      "certification_scheme_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "certification_scheme_hash stored on-chain: keccak256 of the raw certification_scheme entity body."
+      },
+      "certification_body_name": {
+        "type": "string",
+        "maxLength": 255,
+        "example": "Example Certification Body",
+        "description": "Certification body name as stored on-chain."
+      },
+      "certification_body_uri": {
+        "type": "string",
+        "maxLength": 2048,
+        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/banks/ogcr/certification_body/body_VERRA",
+        "description": "certification_body_uri stored on-chain: link back to the OBP certification_body entity."
+      },
+      "certification_body_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "certification_body_hash stored on-chain: keccak256 of the raw certification_body entity body."
+      },
+      "country_id": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "DK",
+        "description": "Country id as stored on-chain."
       },
       "issue_date": {
         "type": "string",
@@ -46,35 +112,65 @@
         "example": "2029-06-01",
         "description": "Certification expiry date as stored on-chain."
       },
+      "audit_report_uri": {
+        "type": "string",
+        "maxLength": 2048,
+        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/banks/ogcr/audit_report/audit_report_01",
+        "description": "audit_report_uri stored on-chain: link back to the OBP audit_report entity."
+      },
+      "audit_report_hash": {
+        "type": "string",
+        "maxLength": 66,
+        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "description": "audit_report_hash stored on-chain: keccak256 of the raw audit_report entity body."
+      },
+      "carbon_removals_under_baseline": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "10.5",
+        "description": "carbon_removals_under_baseline as recorded on the certificate: a decimal string in tonnes CO2e. Empty when the certificate carries no value."
+      },
+      "soil_emissions_under_baseline": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "10.5",
+        "description": "soil_emissions_under_baseline as recorded on the certificate: a decimal string in tonnes CO2e. Empty when the certificate carries no value."
+      },
+      "permanent_net_carbon_removal_benefit": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "10.5",
+        "description": "permanent_net_carbon_removal_benefit as recorded on the certificate: a decimal string in tonnes CO2e. Empty when the certificate carries no value."
+      },
+      "carbon_farming_temporary_net_carbon_removal_benefit": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "10.5",
+        "description": "carbon_farming_temporary_net_carbon_removal_benefit as recorded on the certificate: a decimal string in tonnes CO2e. Empty when the certificate carries no value."
+      },
+      "carbon_farming_net_soil_emission_reduction_benefit": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "10.5",
+        "description": "carbon_farming_net_soil_emission_reduction_benefit as recorded on the certificate: a decimal string in tonnes CO2e. Empty when the certificate carries no value."
+      },
+      "carbon_storage_temporary_net_carbon_removal_benefit": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "10.5",
+        "description": "carbon_storage_temporary_net_carbon_removal_benefit as recorded on the certificate: a decimal string in tonnes CO2e. Empty when the certificate carries no value."
+      },
+      "unit_types": {
+        "type": "string",
+        "maxLength": 1024,
+        "example": "Permanent Removal",
+        "description": "Unit types of the certificate as stored on-chain."
+      },
       "certification_status": {
         "type": "string",
         "maxLength": 64,
-        "example": "active",
+        "example": "certified",
         "description": "Certification status as stored on-chain."
-      },
-      "activity_url": {
-        "type": "string",
-        "maxLength": 2048,
-        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/activity/activity_AB12CD34EF",
-        "description": "activity_url stored on-chain for the linked activity."
-      },
-      "activity_hash": {
-        "type": "string",
-        "maxLength": 66,
-        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "description": "activity_hash stored on-chain: keccak256 of the linked activity entity body."
-      },
-      "certification_url": {
-        "type": "string",
-        "maxLength": 2048,
-        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/certificate_of_compliance/coc_AB12CD34EF",
-        "description": "certification_url stored on-chain: link back to the OBP certificate_of_compliance entity."
-      },
-      "certification_hash": {
-        "type": "string",
-        "maxLength": 66,
-        "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "description": "certification_hash stored on-chain: keccak256 of the raw certificate entity body."
       },
       "owner_address": {
         "type": "string",
@@ -96,8 +192,8 @@
       },
       "chain_id": {
         "type": "integer",
-        "example": 2025,
-        "description": "EVM chain id (OGCR chain = 2025)."
+        "example": 20253,
+        "description": "EVM chain id (OGCR chain = 20253)."
       },
       "tx_hash": {
         "type": "string",

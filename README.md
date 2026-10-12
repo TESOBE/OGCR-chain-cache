@@ -1,12 +1,12 @@
 # OGCR-chain-cache
 
-Reads data points off the **OGCR chain** (private EVM, chain id `2025`) and
+Reads data points off the **OGCR chain** (private EVM, chain id `20253`) and
 caches them into **OBP dynamic entities**. The reverse direction of the
 [`OGCR-Chain/tokenizer`](https://github.com/OpenBankProject/OGCR-Chain) Go
 service, which reads OBP and *mints* NFTs.
 
 ```
-chain 2025            ──read──▶  OGCR-chain-cache  ──write──▶  OBP dynamic entities
+chain 20253           ──read──▶  OGCR-chain-cache  ──write──▶  OBP dynamic entities
 ParcelNFT                                                       parcel_on_chain
 ActivityNFT                                                     activity_on_chain
 CertificationNFT                                                certification_on_chain
@@ -35,9 +35,9 @@ Most records hold the token's on-chain fields plus mint provenance (`token_id`,
 | Entity | Business key | On-chain payload mirrored |
 |---|---|---|
 | `parcel_on_chain` | `parcel_id` | `parcel_uri`, `parcel_hash` |
-| `activity_on_chain` | `activity_id` (a `reference:activity`) | `operator_id`, `name`, `activity_type`, `start_date`, `end_date`, `activity_url`, `activity_hash`, and `minted_at` (Unix time of the mint block) |
-| `certification_on_chain` | `certification_of_compliance_id` | `activity_nft_id`, `certification_scheme_id`, `certification_body_id`, `issue_date`, `expiry_date`, `certification_status`, `activity_url/hash`, `certification_url/hash` |
-| `carbon_credit_batch_on_chain` | `batch_key` | `token_id`, `credit_type`, `activity_nft_id`, `token_bound_account`, `credit_balance`, url/hash pairs for activity, operator, certification, scheme and body |
+| `activity_on_chain` | `activity_id` (a `reference:activity`) | `operator_id`, `operator_name`, `name`, `summary`, `website`, `activity_type`, `unit_types`, `city`, `country_id`, `certification_scheme_id`, `parcel_ids` (comma-joined), `start_date`, `end_date`, `activity_url/hash`, and `minted_at` (Unix time of the mint block) |
+| `certification_on_chain` | `certificate_of_compliance_id` | `certificate_of_compliance_uri/hash`, `activity_id`, `activity_nft_id`, `activity_uri/hash`, `activity_name`, scheme and body name + `uri/hash`, `country_id`, `issue_date`, `expiry_date`, `audit_report_uri/hash`, the six carbon quantities (decimal strings, tonnes CO2e), `unit_types`, `certification_status` |
+| `carbon_credit_batch_on_chain` | `carbon_credit_batch_id` | `batch_name`, `activity_id`, `activity_nft_id`, `activity_name`, `country_id`, `unit_type`, monitoring period dates, `amount` (issued, base units), `status_code`, `issue_date`, `expiry_date`, `token_bound_account`, `credit_balance`, url/hash pairs for activity, operator, certificate, scheme and body |
 | `carbon_credit_balance_on_chain` | `owner_address` | `balance`, `decimals`, `symbol`, `holder_type`, `batch_token_id` |
 | `chain_sync_status` | `sync_key` | not a mirror: the liveness record for this tool, see below |
 
@@ -77,8 +77,8 @@ Two details worth knowing:
 
 ### The carbon-credit layer
 
-A **CarbonCreditBatchNFT** is one `(activity_nft_id, credit_type)` pair, and the
-contract permits exactly one batch per pair. Each batch owns an ERC-6551
+A **CarbonCreditBatchNFT** is the units of one unit type issued for an activity
+over one monitoring period, one token per `carbon_credit_batch_id`. Each batch owns an ERC-6551
 token-bound account, and that account is where the batch's **CarbonCredit**
 (ERC-20) balance sits. Owning the batch NFT is what gates moving those credits
 out into an ordinary wallet.
@@ -86,7 +86,7 @@ out into an ordinary wallet.
 That gives two questions a consumer wants answered, and one entity each:
 
 - **What batches exist, and what is still in them?** `carbon_credit_batch_on_chain`.
-  Every batch, its credit type, its full provenance chain, and the balance held
+  Every batch, its unit type, its issued `amount`, its full provenance chain, and the balance held
   in its token-bound account.
 - **Who holds credits right now?** `carbon_credit_balance_on_chain`. One record
   per holding address, with `holder_type` distinguishing credits still inside a
@@ -105,9 +105,9 @@ Two caveats worth knowing:
   replay transfers. Zero balances are written rather than skipped, so an address
   that has moved everything out has its cached record corrected to zero.
 
-`batch_key` is `"<activity_nft_id>:<credit_type>"`. It exists because records are
-matched for upsert with a server-side query filter, which is dependable for a
-string field and not for an integer one; it is exactly as unique as `token_id`.
+Batches are matched for upsert on `carbon_credit_batch_id` rather than
+`token_id`, because the server-side query filter is dependable for a string field
+and not for an integer one; the contract permits one token per batch id.
 
 ## Setup
 
@@ -117,7 +117,9 @@ go build ./...              # or: make build
 ```
 
 `.env` needs `PARCEL_CONTRACT_ADDRESS`, `ACTIVITY_CONTRACT_ADDRESS` and
-`CERTIFICATION_CONTRACT_ADDRESS` (the tokenizer deployment addresses).
+`CERTIFICATION_CONTRACT_ADDRESS` (for the OGCR chain, from
+`OGCR-Smart-Contracts/deployments/token-system-20253.env`; `.env.example` already
+holds them).
 
 `CREDIT_BATCH_CONTRACT_ADDRESS` and `CREDIT_CONTRACT_ADDRESS` are optional: leave
 either unset and the cacher skips that mirror and says so, rather than failing.
@@ -392,9 +394,23 @@ OGCR_TEST_CREDIT_ADDRESS=$CREDIT_CONTRACT_ADDRESS \
 go test ./internal/eth -run TestScan -v
 ```
 
+The same tests run read-only against the OGCR chain itself, which carries one
+example token of each kind (minted by `MintExampleTokens.s.sol`):
+
+```bash
+set -a; . ../OGCR-Smart-Contracts/deployments/token-system-20253.env; set +a
+OGCR_TEST_RPC_URL=https://nkotb.openbankproject.com \
+OGCR_TEST_PARCEL_ADDRESS=$PARCEL_CONTRACT_ADDRESS \
+OGCR_TEST_ACTIVITY_ADDRESS=$ACTIVITY_CONTRACT_ADDRESS \
+OGCR_TEST_CERTIFICATION_ADDRESS=$CERTIFICATION_CONTRACT_ADDRESS \
+OGCR_TEST_CREDIT_BATCH_ADDRESS=$CREDIT_BATCH_CONTRACT_ADDRESS \
+OGCR_TEST_CREDIT_ADDRESS=$CREDIT_CONTRACT_ADDRESS \
+go test ./internal/eth -run TestScan -v
+```
+
 `TestScanNFTs` checks that each NFT mirror has the business key it is upserted
 on, and that a certificate's activity reference resolves to an activity that was
-actually scanned. `TestScanCredits` checks that batch keys are unique, that
+actually scanned. `TestScanCredits` checks that `carbon_credit_batch_id`s are unique, that
 balances are read and carry a block height, and that every batch's token-bound
 account is classified as one and agrees with the batch's own balance.
 

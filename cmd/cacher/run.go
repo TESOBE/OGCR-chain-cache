@@ -181,12 +181,12 @@ func (r *run) mirrorCertifications() mirrorResult {
 	for _, c := range certs {
 		msg, err := cache.UpsertCertification(r.client, c)
 		if err != nil {
-			r.fail("upsert certification failed", "certification_of_compliance_id", c.CertificationOfComplianceID, "err", err)
+			r.fail("upsert certification failed", "certificate_of_compliance_id", c.CertificateOfComplianceID, "err", err)
 			res.errors++
 			continue
 		}
 		res.count++
-		slog.Info("certification "+msg, "certification_of_compliance_id", c.CertificationOfComplianceID, "token_id", c.TokenID)
+		slog.Info("certification "+msg, "certificate_of_compliance_id", c.CertificateOfComplianceID, "token_id", c.TokenID)
 	}
 	return res
 }
@@ -214,12 +214,12 @@ func (r *run) mirrorCredits() (batchRes, balanceRes mirrorResult) {
 		for _, b := range batches {
 			msg, err := cache.UpsertCreditBatch(r.client, b)
 			if err != nil {
-				r.fail("upsert credit batch failed", "batch_key", b.BatchKey, "err", err)
+				r.fail("upsert credit batch failed", "carbon_credit_batch_id", b.CarbonCreditBatchID, "err", err)
 				batchRes.errors++
 				continue
 			}
 			batchRes.count++
-			slog.Info("credit batch "+msg, "batch_key", b.BatchKey, "token_id", b.TokenID, "credit_balance", b.CreditBalance)
+			slog.Info("credit batch "+msg, "carbon_credit_batch_id", b.CarbonCreditBatchID, "token_id", b.TokenID, "credit_balance", b.CreditBalance)
 		}
 	} else {
 		slog.Info("skipping credit batches: CREDIT_BATCH_CONTRACT_ADDRESS not set")

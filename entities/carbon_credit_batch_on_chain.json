@@ -1,33 +1,44 @@
 {
   "carbon_credit_batch_on_chain": {
-    "description": "Cache of CarbonCreditBatchNFT data minted on the OGCR chain (chain id 2025). One record per batch token. A batch is one (activity_nft_id, credit_type) pair, and each batch owns an ERC-6551 token-bound account that holds its CarbonCredit (ERC-20) balance. Populated by OGCR-chain-cache reading the chain. Join to `activity_on_chain` on activity_nft_id = token_id to reach the OBP activity.",
+    "description": "Cache of CarbonCreditBatchNFT data minted on the OGCR chain (chain id 20253). One record per carbon_credit_batch_id: the units of one unit type issued for an activity over one monitoring period. Each batch owns an ERC-6551 token-bound account that holds its CarbonCredit (ERC-20) balance. Populated by OGCR-chain-cache reading the chain. Join to `activity_on_chain` on activity_id (or activity_nft_id = token_id) to reach the OBP activity.",
     "has_public_access": true,
     "auth_mode": "UserOrApplication",
-    "required": ["batch_key", "token_id", "credit_type"],
+    "required": ["carbon_credit_batch_id", "token_id", "unit_type"],
     "properties": {
-      "batch_key": {
+      "carbon_credit_batch_id": {
         "type": "string",
         "minLength": 1,
         "maxLength": 512,
-        "example": "1:permanent_carbon_removal",
-        "description": "Business key for this record: \"<activity_nft_id>:<credit_type>\". Mirrors the contract's own uniqueness constraint (batchKey = keccak256(activity_nft_id, credit_type)), which allows exactly one batch per pair. Used to match records for upsert, since a string key can be filtered server-side where an integer token_id cannot be relied on to be."
+        "example": "verification_AB12:permanent_removal",
+        "description": "Business key for this record, as stored on-chain. The contract permits one batch token per id (tokenIdByBatchId), so it is used to match records for upsert."
       },
       "token_id": {
         "type": "integer",
         "example": 1,
-        "description": "CarbonCreditBatchNFT token id, unique per contract. Records are matched on batch_key rather than this, so that the match uses a string field."
+        "description": "CarbonCreditBatchNFT token id, unique per contract. Records are matched on carbon_credit_batch_id rather than this, so that the match uses a string field."
       },
-      "credit_type": {
+      "batch_name": {
         "type": "string",
-        "minLength": 1,
         "maxLength": 255,
-        "example": "permanent_carbon_removal",
-        "description": "CRCF unit category this batch represents, as stored on-chain. A batch is unique per (activity_nft_id, credit_type)."
+        "example": "Permanent Removals Carbon Credit Batch",
+        "description": "Display name of the batch by unit type, as stored on-chain."
+      },
+      "activity_id": {
+        "type": "string",
+        "maxLength": 255,
+        "example": "activity_AB12CD34EF",
+        "description": "activity_id this batch was issued for, as stored on-chain."
       },
       "activity_nft_id": {
         "type": "integer",
         "example": 1,
         "description": "ActivityNFT token id this batch was issued against. Join to `activity_on_chain`.token_id to reach the OBP activity_id."
+      },
+      "activity_name": {
+        "type": "string",
+        "maxLength": 255,
+        "example": "Reforestation 2024",
+        "description": "Activity name as stored on-chain."
       },
       "activity_url": {
         "type": "string",
@@ -41,6 +52,12 @@
         "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "description": "activity_hash stored on-chain: keccak256 of the raw activity entity body."
       },
+      "country_id": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "DK",
+        "description": "Country id as stored on-chain."
+      },
       "operator_url": {
         "type": "string",
         "maxLength": 2048,
@@ -53,17 +70,60 @@
         "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "description": "operator_hash stored on-chain: keccak256 of the raw operator entity body."
       },
-      "certification_url": {
+      "certificate_of_compliance_uri": {
         "type": "string",
         "maxLength": 2048,
-        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/certificate_of_compliance/coc_AB12CD34EF",
-        "description": "certification_url stored on-chain: link back to the OBP certificate_of_compliance entity."
+        "example": "https://dcr.ogcr.tesobe.com/obp/dynamic-entity/banks/ogcr/certificate_of_compliance/coc_AB12CD34EF",
+        "description": "certificate_of_compliance_uri stored on-chain: link back to the OBP certificate_of_compliance entity."
       },
-      "certification_hash": {
+      "certificate_of_compliance_hash": {
         "type": "string",
         "maxLength": 66,
         "example": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "description": "certification_hash stored on-chain: keccak256 of the raw certificate entity body."
+        "description": "certificate_of_compliance_hash stored on-chain: keccak256 of the raw certificate_of_compliance entity body."
+      },
+      "unit_type": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255,
+        "example": "Permanent Removal",
+        "description": "CRCF unit type this batch represents, as stored on-chain."
+      },
+      "monitoring_period_start_date": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "2024-01-01",
+        "description": "Monitoring period start date as stored on-chain."
+      },
+      "monitoring_period_end_date": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "2024-12-31",
+        "description": "Monitoring period end date as stored on-chain."
+      },
+      "amount": {
+        "type": "string",
+        "maxLength": 78,
+        "example": "6500000000000000000",
+        "description": "Units issued for the batch, fixed at mint, in CarbonCredit base units (18 decimals): 6.5 tonnes is 6500000000000000000. Decimal string because a uint256 does not fit an integer field. The live balance is credit_balance."
+      },
+      "status_code": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "issued",
+        "description": "Batch status as stored on-chain."
+      },
+      "issue_date": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "2025-01-01",
+        "description": "Batch issue date as stored on-chain."
+      },
+      "expiry_date": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "2030-01-01",
+        "description": "Batch expiry date as stored on-chain."
       },
       "certification_scheme_url": {
         "type": "string",
@@ -137,8 +197,8 @@
       },
       "chain_id": {
         "type": "integer",
-        "example": 2025,
-        "description": "EVM chain id (OGCR chain = 2025)."
+        "example": 20253,
+        "description": "EVM chain id (OGCR chain = 20253)."
       },
       "tx_hash": {
         "type": "string",

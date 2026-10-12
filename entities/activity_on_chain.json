@@ -1,6 +1,6 @@
 {
   "activity_on_chain": {
-    "description": "Cache of ActivityNFT data minted on the OGCR chain (chain id 2025). One record per activity_id, populated by OGCR-chain-cache reading the chain.",
+    "description": "Cache of ActivityNFT data minted on the OGCR chain (chain id 20253). One record per activity_id, populated by OGCR-chain-cache reading the chain.",
     "has_public_access": true,
     "auth_mode": "UserOrApplication",
     "required": [
@@ -25,17 +25,65 @@
         "example": "operator_9XYZ",
         "description": "operator_id stored on-chain (owning operator)."
       },
+      "operator_name": {
+        "type": "string",
+        "maxLength": 255,
+        "example": "Example Operator GmbH",
+        "description": "Operator legal name (operator.legal_name) as stored on-chain."
+      },
       "name": {
         "type": "string",
         "maxLength": 255,
         "example": "Reforestation 2024",
         "description": "Activity name as stored on-chain."
       },
+      "summary": {
+        "type": "string",
+        "maxLength": 4000,
+        "example": "Rewetting of drained peat soils.",
+        "description": "Activity summary as stored on-chain."
+      },
+      "website": {
+        "type": "string",
+        "maxLength": 2048,
+        "example": "https://example.org",
+        "description": "Activity website as stored on-chain."
+      },
       "activity_type": {
         "type": "string",
         "maxLength": 255,
         "example": "carbon_farming",
         "description": "Activity type as stored on-chain."
+      },
+      "unit_types": {
+        "type": "string",
+        "maxLength": 1024,
+        "example": "Permanent Removal",
+        "description": "Unit types of the activity as stored on-chain."
+      },
+      "city": {
+        "type": "string",
+        "maxLength": 255,
+        "example": "Viborg",
+        "description": "City as stored on-chain."
+      },
+      "country_id": {
+        "type": "string",
+        "maxLength": 64,
+        "example": "DK",
+        "description": "Country id as stored on-chain."
+      },
+      "certification_scheme_id": {
+        "type": "string",
+        "maxLength": 255,
+        "example": "scheme_SALUS",
+        "description": "certification_scheme_id as stored on-chain."
+      },
+      "parcel_ids": {
+        "type": "string",
+        "maxLength": 20000,
+        "example": "parcel_01,parcel_02",
+        "description": "Parcels linked to the activity at mint time: the contract's parcel_ids[] joined with commas, as tokenURI renders it."
       },
       "start_date": {
         "type": "string",
@@ -81,8 +129,8 @@
       },
       "chain_id": {
         "type": "integer",
-        "example": 2025,
-        "description": "EVM chain id (OGCR chain = 2025)."
+        "example": 20253,
+        "description": "EVM chain id (OGCR chain = 20253)."
       },
       "tx_hash": {
         "type": "string",

@@ -9,12 +9,12 @@
         "type": "string",
         "minLength": 1,
         "maxLength": 128,
-        "example": "chain-2025",
+        "example": "chain-20253",
         "description": "Business key: \"chain-<chain_id>\". One record per chain, overwritten each run. A string key so it can be matched with a server-side query filter."
       },
       "chain_id": {
         "type": "integer",
-        "example": 2025,
+        "example": 20253,
         "description": "EVM chain id that was read."
       },
       "head_block": {

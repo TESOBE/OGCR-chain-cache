@@ -100,12 +100,12 @@ func TestScanNFTs(t *testing.T) {
 		activityByToken[a.TokenID] = true
 	}
 	for _, c := range certs {
-		if c.CertificationOfComplianceID == "" {
+		if c.CertificateOfComplianceID == "" {
 			t.Errorf("certification token %d has no compliance id, which is its upsert key", c.TokenID)
 		}
 		if !activityByToken[c.ActivityNftID] {
 			t.Errorf("certification %s references activity token %d, which was not found",
-				c.CertificationOfComplianceID, c.ActivityNftID)
+				c.CertificateOfComplianceID, c.ActivityNftID)
 		}
 	}
 }
@@ -148,28 +148,28 @@ func TestScanCredits(t *testing.T) {
 
 	seen := map[string]bool{}
 	for _, b := range batches {
-		if b.BatchKey == "" || b.CreditType == "" {
-			t.Errorf("batch %d: empty business key or credit type", b.TokenID)
+		if b.CarbonCreditBatchID == "" || b.UnitType == "" {
+			t.Errorf("batch %d: empty carbon_credit_batch_id or unit type", b.TokenID)
 		}
-		if seen[b.BatchKey] {
-			t.Errorf("batch key %q is not unique; it is the upsert key", b.BatchKey)
+		if seen[b.CarbonCreditBatchID] {
+			t.Errorf("carbon_credit_batch_id %q is not unique; it is the upsert key", b.CarbonCreditBatchID)
 		}
-		seen[b.BatchKey] = true
+		seen[b.CarbonCreditBatchID] = true
 
 		if b.TokenBoundAccount == "" {
-			t.Errorf("batch %s: no token-bound account", b.BatchKey)
+			t.Errorf("batch %s: no token-bound account", b.CarbonCreditBatchID)
 		}
 		if b.CreditBalance == "" {
-			t.Errorf("batch %s: balance not read despite a configured credit contract", b.BatchKey)
+			t.Errorf("batch %s: balance not read despite a configured credit contract", b.CarbonCreditBatchID)
 		}
 		if b.BlockNumberBalance == 0 {
-			t.Errorf("batch %s: balance has no block height", b.BatchKey)
+			t.Errorf("batch %s: balance has no block height", b.CarbonCreditBatchID)
 		}
 		if b.TokenURI == "" {
-			t.Errorf("batch %s: no token URI", b.BatchKey)
+			t.Errorf("batch %s: no token URI", b.CarbonCreditBatchID)
 		}
 		if b.ChainID != r.ChainID() {
-			t.Errorf("batch %s: chain id %d, want %d", b.BatchKey, b.ChainID, r.ChainID())
+			t.Errorf("batch %s: chain id %d, want %d", b.CarbonCreditBatchID, b.ChainID, r.ChainID())
 		}
 	}
 
@@ -197,17 +197,17 @@ func TestScanCredits(t *testing.T) {
 	for _, batch := range batches {
 		got, ok := byAddress[batch.TokenBoundAccount]
 		if !ok {
-			t.Errorf("batch %s: token-bound account %s missing from balances", batch.BatchKey, batch.TokenBoundAccount)
+			t.Errorf("batch %s: token-bound account %s missing from balances", batch.CarbonCreditBatchID, batch.TokenBoundAccount)
 			continue
 		}
 		if got.HolderType != HolderTokenBoundAccount {
-			t.Errorf("batch %s: account classified %q, want %q", batch.BatchKey, got.HolderType, HolderTokenBoundAccount)
+			t.Errorf("batch %s: account classified %q, want %q", batch.CarbonCreditBatchID, got.HolderType, HolderTokenBoundAccount)
 		}
 		if got.BatchTokenID != batch.TokenID {
-			t.Errorf("batch %s: account maps to batch %d, want %d", batch.BatchKey, got.BatchTokenID, batch.TokenID)
+			t.Errorf("batch %s: account maps to batch %d, want %d", batch.CarbonCreditBatchID, got.BatchTokenID, batch.TokenID)
 		}
 		if got.Balance != batch.CreditBalance {
-			t.Errorf("batch %s: batch balance %s but account balance %s", batch.BatchKey, batch.CreditBalance, got.Balance)
+			t.Errorf("batch %s: batch balance %s but account balance %s", batch.CarbonCreditBatchID, batch.CreditBalance, got.Balance)
 		}
 	}
 }

@@ -1,4 +1,4 @@
-// Command cacher reads the OGCR token family off the chain (chain id 2025) and
+// Command cacher reads the OGCR token family off the chain (chain id 20253) and
 // upserts each token into its OBP `*_on_chain` dynamic entity.
 //
 //	cacher                       # mirror everything that is configured

@@ -85,10 +85,36 @@ func TestHealthReportsLastRunAndMissingScopes(t *testing.T) {
 	}
 }
 
+// TestAlive pins the same contract as OBP-API's AliveCheckRoutesTest.
 func TestAlive(t *testing.T) {
-	w := get(t, testServer(), handleAlive, "/alive")
-	if w.Code != 200 || w.Body.String() != "true" || !strings.HasPrefix(w.Header().Get("Content-Type"), "application/json") {
-		t.Errorf("alive = %d %q %q, want 200 \"true\" application/json", w.Code, w.Body.String(), w.Header().Get("Content-Type"))
+	mux := testServer().routes()
+	do := func(method, path, auth string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(method, path, nil)
+		if auth != "" {
+			req.Header.Set("Authorization", auth)
+		}
+		w := httptest.NewRecorder()
+		mux.ServeHTTP(w, req)
+		return w
+	}
+
+	for _, auth := range []string{"", "Bearer not-a-real-token"} {
+		w := do("GET", "/alive", auth)
+		if w.Code != http.StatusOK || w.Body.String() != "true" || w.Body.Len() != 4 {
+			t.Errorf("GET /alive (auth %q) = %d %q, want 200 \"true\"", auth, w.Code, w.Body.String())
+		}
+		ct := w.Header().Get("Content-Type")
+		if !strings.Contains(ct, "application/json") || !strings.Contains(strings.ToLower(ct), "utf-8") {
+			t.Errorf("Content-Type = %q, want application/json with UTF-8", ct)
+		}
+	}
+	for _, c := range []struct{ method, path string }{{"POST", "/alive"}, {"GET", "/alive/foo"}, {"GET", "/obp/v5.0.0/alive"}} {
+		if w := do(c.method, c.path, ""); w.Code == http.StatusOK || w.Body.String() == "true" {
+			t.Errorf("%s %s = %d %q, want no match", c.method, c.path, w.Code, w.Body.String())
+		}
+	}
+	if w := do("GET", "/", ""); w.Body.String() == "true" {
+		t.Error("GET / should be the status page, not the alive probe")
 	}
 }
 

@@ -68,6 +68,7 @@ func serve(ctx context.Context, rn *runner, addr string) error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", s.handleStatus)
+	mux.HandleFunc("GET /alive", handleAlive)
 	mux.HandleFunc("GET /health", s.handleHealth)
 	mux.HandleFunc("POST /run", s.handleRun)
 	httpServer := &http.Server{Addr: addr, Handler: mux, ReadHeaderTimeout: 10 * time.Second}
@@ -195,6 +196,13 @@ type health struct {
 	EntitySetupFailed []string   `json:"entity_setup_failed"`
 	EntitySetupError  string     `json:"entity_setup_error,omitempty"`
 	NextRunAt         *time.Time `json:"next_run_at,omitempty"`
+}
+
+// handleAlive is the liveness probe, matching OBP-API's GET /alive: 200 with the JSON literal true.
+func handleAlive(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	_, _ = w.Write([]byte("true"))
 }
 
 func (s *server) handleHealth(w http.ResponseWriter, _ *http.Request) {

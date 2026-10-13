@@ -85,6 +85,13 @@ func TestHealthReportsLastRunAndMissingScopes(t *testing.T) {
 	}
 }
 
+func TestAlive(t *testing.T) {
+	w := get(t, testServer(), handleAlive, "/alive")
+	if w.Code != 200 || w.Body.String() != "true" || !strings.HasPrefix(w.Header().Get("Content-Type"), "application/json") {
+		t.Errorf("alive = %d %q %q, want 200 \"true\" application/json", w.Code, w.Body.String(), w.Header().Get("Content-Type"))
+	}
+}
+
 func TestStatusPageRenders(t *testing.T) {
 	s := testServer()
 	s.addRun("ok")

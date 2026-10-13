@@ -271,6 +271,7 @@ make serve-local         # the same against the local chain and OBP
   and which are held, the last run's errors, and recent runs. It refreshes
   every 10 seconds and has a **Run now** button.
 - `/health` returns the same status as JSON, for scripts and the dev-env page.
+- `/alive` returns `true` (200, JSON) while the process is up, the same liveness probe as OBP-API's `GET /alive`.
 
 The page shows only this process's own state, so it needs no OBP login. Bind it
 to localhost: anyone who can reach it sees the error messages and can trigger a

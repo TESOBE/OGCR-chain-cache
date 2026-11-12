@@ -1,0 +1,114 @@
+{
+ "about": "Every OBP-API call the cacher, setup-entity and delete-records make, all through internal/obp/client.go: verb, path (OBP placeholders in capitals; ENTITY is one of the entities in internal/cache/cache.go), the source file and the text that makes the call (needles), and the response fields the code reads. The OIDC discovery and token requests go to OBP-OIDC, not OBP-API, and are not listed. internal/obp/contract_test.go checks this list against the source and against snapshot.json, which obp-api-contract/snapshot.py writes from an OBP-API's resource docs.",
+ "calls": [
+  {
+   "verb": "GET",
+   "path": "/obp/v7.0.0/banks/BANK_ID/dynamic-entities/ENTITY",
+   "source": "internal/obp/client.go",
+   "needles": [
+    "\"%s/obp/v7.0.0/banks/%s/dynamic-entities/%s%s\"",
+    "c.do(\"GET\", c.entityURL(entity, \"\", q), nil, &raw)"
+   ],
+   "reads": [
+    "ENTITY_list[]",
+    "ENTITY_list[].ENTITY.ENTITY_id|ENTITY_list[].ENTITY_id"
+   ],
+   "note": "Filtered by a record field and paged with obp_limit/obp_offset. Each record is read from under the entity name when OBP nests it there; delete-records also prints every other *_id field of the record.",
+   "undocumented_endpoint": "dynamic entity, defined at run time: OBP-API documents each record endpoint only once the entity exists, under its own name"
+  },
+  {
+   "verb": "POST",
+   "path": "/obp/v7.0.0/banks/BANK_ID/dynamic-entities/ENTITY",
+   "source": "internal/obp/client.go",
+   "needles": [
+    "\"%s/obp/v7.0.0/banks/%s/dynamic-entities/%s%s\"",
+    "c.do(\"POST\", c.entityURL(entity, \"\", nil), record, &out)"
+   ],
+   "reads": [],
+   "note": "The answer is decoded but no caller reads it.",
+   "undocumented_endpoint": "dynamic entity, defined at run time: OBP-API documents each record endpoint only once the entity exists, under its own name"
+  },
+  {
+   "verb": "PUT",
+   "path": "/obp/v7.0.0/banks/BANK_ID/dynamic-entities/ENTITY/RECORD_ID",
+   "source": "internal/obp/client.go",
+   "needles": [
+    "\"%s/obp/v7.0.0/banks/%s/dynamic-entities/%s%s\"",
+    "c.do(\"PUT\", c.entityURL(entity, \"/\"+url.PathEscape(recordID), nil), record, &out)"
+   ],
+   "reads": [],
+   "note": "The answer is decoded but no caller reads it.",
+   "undocumented_endpoint": "dynamic entity, defined at run time: OBP-API documents each record endpoint only once the entity exists, under its own name"
+  },
+  {
+   "verb": "DELETE",
+   "path": "/obp/v7.0.0/banks/BANK_ID/dynamic-entities/ENTITY/RECORD_ID",
+   "source": "internal/obp/client.go",
+   "needles": [
+    "\"%s/obp/v7.0.0/banks/%s/dynamic-entities/%s%s\"",
+    "c.do(\"DELETE\", c.entityURL(entity, \"/\"+url.PathEscape(recordID), nil), nil, nil)"
+   ],
+   "reads": [],
+   "undocumented_endpoint": "dynamic entity, defined at run time: OBP-API documents each record endpoint only once the entity exists, under its own name"
+  },
+  {
+   "verb": "GET",
+   "path": "/obp/v7.0.0/management/banks/BANK_ID/dynamic-entities",
+   "source": "internal/obp/client.go",
+   "needles": [
+    "\"%s/obp/v7.0.0/management/banks/%s/dynamic-entities\"",
+    "c.do(\"GET\", c.managementURL(), nil, &raw)"
+   ],
+   "reads": [
+    "dynamic_entities[].dynamic_entity_id",
+    "dynamic_entities[].entity_name",
+    "dynamic_entities[].has_personal_entity",
+    "dynamic_entities[].has_public_access",
+    "dynamic_entities[].auth_mode",
+    "dynamic_entities[].schema",
+    "dynamic_entities[].record_count"
+   ],
+   "note": "setup-entity compares the flags and the whole schema with its own definition; record_count is only logged."
+  },
+  {
+   "verb": "POST",
+   "path": "/obp/v7.0.0/management/banks/BANK_ID/dynamic-entities",
+   "source": "internal/obp/client.go",
+   "needles": [
+    "\"%s/obp/v7.0.0/management/banks/%s/dynamic-entities\"",
+    "c.do(\"POST\", c.managementURL(), definition, &out)"
+   ],
+   "reads": [],
+   "note": "The answer is decoded but no caller reads it."
+  },
+  {
+   "verb": "PUT",
+   "path": "/obp/v7.0.0/management/banks/BANK_ID/dynamic-entities/DYNAMIC_ENTITY_ID",
+   "source": "internal/obp/client.go",
+   "needles": [
+    "\"%s/obp/v7.0.0/management/banks/%s/dynamic-entities\"",
+    "c.do(\"PUT\", c.managementURL()+\"/\"+url.PathEscape(entityID), definition, &out)"
+   ],
+   "reads": [],
+   "note": "The answer is decoded but no caller reads it."
+  },
+  {
+   "verb": "PUT",
+   "path": "/obp/v7.0.0/consumers/current/platform-app",
+   "source": "internal/obp/client.go",
+   "needles": [
+    "c.baseURL+\"/obp/v7.0.0/consumers/current/platform-app\""
+   ],
+   "reads": [
+    "consumer_id",
+    "label",
+    "required_scopes[].role_name",
+    "required_scopes[].bank_id",
+    "required_scopes[].needed_for",
+    "required_scopes[].optional",
+    "required_scopes[].held"
+   ],
+   "note": "The cacher and setup-entity log the missing Scopes; the status page shows the whole list."
+  }
+ ]
+}

@@ -393,3 +393,95 @@ func TestAVersionThatDiffersFromThePathIsReported(t *testing.T) {
 		}
 	}
 }
+
+// jsonPaths lists the JSON field paths a struct type decodes, as `reads` writes
+// them: nested objects as a.b, lists of objects as a[].b, embedded structs
+// promoted, maps and scalars as leaves.
+func jsonPaths(rt reflect.Type, prefix string) []string {
+	for rt.Kind() == reflect.Pointer {
+		rt = rt.Elem()
+	}
+	var out []string
+	for i := 0; i < rt.NumField(); i++ {
+		f := rt.Field(i)
+		name, _, _ := strings.Cut(f.Tag.Get("json"), ",")
+		ft := f.Type
+		for ft.Kind() == reflect.Pointer {
+			ft = ft.Elem()
+		}
+		// encoding/json promotes the fields of an embedded struct even when its type is unexported.
+		if f.Anonymous && name == "" && ft.Kind() == reflect.Struct {
+			out = append(out, jsonPaths(ft, prefix)...)
+			continue
+		}
+		if !f.IsExported() || name == "-" {
+			continue
+		}
+		if name == "" {
+			name = f.Name
+		}
+		switch {
+		case ft.Kind() == reflect.Struct:
+			out = append(out, jsonPaths(ft, prefix+name+".")...)
+		case ft.Kind() == reflect.Slice && ft.Elem().Kind() == reflect.Struct:
+			out = append(out, jsonPaths(ft.Elem(), prefix+name+"[].")...)
+		default:
+			out = append(out, prefix+name)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+func TestReadsMatchTheStructsTheResponseIsDecodedInto(t *testing.T) {
+	// Tests that `reads` of the entries that decode into one named struct is exactly that struct's JSON fields,
+	// so a field added to or dropped from the struct also shows up in the contract (and the snapshot check).
+	// The record list of the dynamic-entity endpoints has no struct: its `reads` is kept by hand.
+	decoded := map[string]struct {
+		into   reflect.Type
+		prefix string // the object around the struct in the response
+	}{
+		"GET /obp/v7.0.0/management/banks/BANK_ID/dynamic-entities": {reflect.TypeOf(LiveEntity{}), "dynamic_entities[]."},
+		"PUT /obp/v7.0.0/consumers/current/platform-app":            {reflect.TypeOf(PlatformApp{}), ""},
+	}
+	for _, c := range calls(t) {
+		d, ok := decoded[c.key()]
+		if !ok {
+			continue
+		}
+		delete(decoded, c.key())
+		reads := append([]string(nil), c.Reads...)
+		sort.Strings(reads)
+		if got := jsonPaths(d.into, d.prefix); !reflect.DeepEqual(got, reads) {
+			t.Errorf("%s: reads %q, but %s decodes %q", c.key(), reads, d.into.Name(), got)
+		}
+	}
+	for key := range decoded {
+		t.Errorf("%s is not in contract.json", key)
+	}
+}
+
+func TestJSONPathsFollowTheDecoder(t *testing.T) {
+	// Tests the helper: tags win over field names, embedded structs are promoted, lists and nested objects
+	// get a[] and a. paths, maps are leaves, and `-` and unexported fields are skipped.
+	type inner struct {
+		ID string `json:"id"`
+	}
+	type embedded struct {
+		Role string `json:"role"`
+	}
+	type sample struct {
+		embedded
+		Name   string `json:"name,omitempty"`
+		Plain  string
+		Hidden string `json:"-"`
+		secret string
+		Schema map[string]any `json:"schema"`
+		Items  []inner        `json:"items"`
+		One    *inner         `json:"one"`
+	}
+	want := []string{"Plain", "items[].id", "name", "one.id", "role", "schema"}
+	if got := jsonPaths(reflect.TypeOf(sample{secret: ""}), ""); !reflect.DeepEqual(got, want) {
+		t.Errorf("jsonPaths = %q, want %q", got, want)
+	}
+}

@@ -15,11 +15,11 @@ jobs:
       # repos (GitHub withholds secrets from fork PRs) → publish auto-skips.
       DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build container image
         run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
             echo "Release branch build — tagging :latest"
             docker build . \
               --tag docker.io/${{ env.DOCKER_HUB_ORGANIZATION }}/${{ env.DOCKER_HUB_REPOSITORY }}:$GITHUB_SHA \

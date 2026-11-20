@@ -429,3 +429,8 @@ re-read each time.
 ## Funding
 
 The OGCR Project has received funding from the European Union's Horizon Europe programme under grant agreement 101218854.
+
+## Licence
+
+Copyright (C) 2026 TESOBE GmbH. Licensed under the GNU Affero General Public
+License v3; see [LICENSE](LICENSE) and [NOTICE](NOTICE).
